@@ -8,6 +8,7 @@ import type {
   LocalSkillCandidate,
   PlatformConfig,
   RulePackage,
+  RuntimeStatus,
   SourceConfig
 } from './types'
 
@@ -56,5 +57,12 @@ export interface SkillPortApi {
   }
   dashboard: {
     summary: () => Promise<ApiResult<DashboardSummary>>
+  }
+  runtime: {
+    status: () => Promise<ApiResult<RuntimeStatus>>
+    config: () => Promise<ApiResult<unknown>>
+  }
+  security: {
+    tokenStatus: () => Promise<ApiResult<RuntimeStatus['tokenEncryption'] & { configuredTokens: Array<{ provider: string; label: string; configured: boolean; updatedAt: string }> }>>
   }
 }

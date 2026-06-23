@@ -57,6 +57,7 @@ import type {
   LocalSkillCandidate,
   PlatformConfig,
   RulePackage,
+  RuntimeStatus,
   SourceConfig
 } from '../../shared/types'
 import { defaultLocale, languageOptions, nextLocale, t, type Locale, type TranslationKey } from './i18n'
@@ -106,6 +107,7 @@ function App(): JSX.Element {
   const [scanResults, setScanResults] = useState<LocalSkillCandidate[]>([])
   const [jobs, setJobs] = useState<JobRecord[]>([])
   const [audit, setAudit] = useState<AuditRecord[]>([])
+  const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>()
   const [selectedSkillId, setSelectedSkillId] = useState('pr-review')
   const [selectedPlatformKey, setSelectedPlatformKey] = useState('claude-code')
   const [selectedRuleId, setSelectedRuleId] = useState('frontend-nextjs')
@@ -117,14 +119,15 @@ function App(): JSX.Element {
   }, [])
 
   async function refreshAll(): Promise<void> {
-    const [summaryResult, catalogResult, sourcesResult, platformsResult, rulesResult, jobsResult, auditResult] = await Promise.all([
+    const [summaryResult, catalogResult, sourcesResult, platformsResult, rulesResult, jobsResult, auditResult, runtimeResult] = await Promise.all([
       window.skillport.dashboard.summary(),
       window.skillport.catalog.search({}),
       window.skillport.sources.list(),
       window.skillport.platforms.list(),
       window.skillport.rules.list(),
       window.skillport.jobs.list(),
-      window.skillport.audit.list()
+      window.skillport.audit.list(),
+      window.skillport.runtime.status()
     ])
     if (summaryResult.ok) setSummary(summaryResult.data)
     if (catalogResult.ok) setCatalog(catalogResult.data)
@@ -133,6 +136,7 @@ function App(): JSX.Element {
     if (rulesResult.ok) setRules(rulesResult.data)
     if (jobsResult.ok) setJobs(jobsResult.data)
     if (auditResult.ok) setAudit(auditResult.data)
+    if (runtimeResult.ok) setRuntimeStatus(runtimeResult.data)
   }
 
   async function runScan(): Promise<void> {
@@ -161,7 +165,7 @@ function App(): JSX.Element {
   const page = useMemo(() => {
     switch (activeView) {
       case 'dashboard':
-        return <Dashboard locale={locale} summary={summary} jobs={jobs} audit={audit} platforms={platforms} />
+        return <Dashboard locale={locale} summary={summary} runtimeStatus={runtimeStatus} jobs={jobs} audit={audit} platforms={platforms} />
       case 'store':
         return <SkillStore locale={locale} catalog={catalog} selectedSkill={selectedSkill} onSelectSkill={setSelectedSkillId} platforms={platforms} />
       case 'installed':
@@ -179,9 +183,9 @@ function App(): JSX.Element {
       case 'projects':
         return <Projects locale={locale} platforms={platforms} />
       case 'settings':
-        return <SettingsPage locale={locale} onLocaleChange={setAndSaveLocale(setLocale)} />
+        return <SettingsPage locale={locale} runtimeStatus={runtimeStatus} onLocaleChange={setAndSaveLocale(setLocale)} />
     }
-  }, [activeView, audit, busy, catalog, jobs, locale, platforms, rules, scanResults, selectedPlatform, selectedRule, selectedSkill, selectedSource, summary])
+  }, [activeView, audit, busy, catalog, jobs, locale, platforms, rules, runtimeStatus, scanResults, selectedPlatform, selectedRule, selectedSkill, selectedSource, summary])
 
   return (
     <div className="shell">
@@ -291,12 +295,14 @@ function Topbar({
 function Dashboard({
   locale,
   summary,
+  runtimeStatus,
   jobs,
   audit,
   platforms
 }: {
   locale: Locale
   summary?: DashboardSummary
+  runtimeStatus?: RuntimeStatus
   jobs: JobRecord[]
   audit: AuditRecord[]
   platforms: PlatformConfig[]
@@ -311,10 +317,10 @@ function Dashboard({
         <Kpi icon={RefreshCcw} label="最近同步状态" value="成功" delta="5 分钟前" tone="orange" />
       </div>
       <div className="status-strip">
-        <StatusPill icon={Globe2} title="在线状态" value="在线" tone="ok" />
-        <StatusPill icon={Github} title="GitHub Token" value="有效，剩余 4632 / 5000" tone="ok" />
-        <StatusPill icon={GitBranch} title="GitLab Token" value="有效，18 天后过期" tone="ok" />
-        <StatusPill icon={Database} title="缓存空间" value="12.4 GB / 50 GB" tone="info" />
+        <StatusPill icon={Database} title="SQLite" value={runtimeStatus?.databaseReady ? runtimeStatus.databasePath : '初始化中'} tone="ok" />
+        <StatusPill icon={FileCode2} title="Config" value={runtimeStatus?.configReady ? runtimeStatus.configPath : '初始化中'} tone="ok" />
+        <StatusPill icon={KeyRound} title="Token 加密" value={runtimeStatus?.tokenEncryption.backend ?? '检测中'} tone={runtimeStatus?.tokenEncryption.available ? 'ok' : 'warn'} />
+        <StatusPill icon={HardDrive} title="Logs" value={runtimeStatus?.logsReady ? runtimeStatus.logsDir : '初始化中'} tone="info" />
       </div>
       <div className="dashboard-grid">
         <Panel title="最近任务" action="查看全部">
@@ -862,7 +868,15 @@ function Projects({ locale, platforms }: { locale: Locale; platforms: PlatformCo
   )
 }
 
-function SettingsPage({ locale, onLocaleChange }: { locale: Locale; onLocaleChange: (locale: Locale) => void }): JSX.Element {
+function SettingsPage({
+  locale,
+  runtimeStatus,
+  onLocaleChange
+}: {
+  locale: Locale
+  runtimeStatus?: RuntimeStatus
+  onLocaleChange: (locale: Locale) => void
+}): JSX.Element {
   return (
     <section>
       <PageTitle title={t(locale, 'page.settings.title')} description={t(locale, 'page.settings.description')} />
@@ -874,9 +888,9 @@ function SettingsPage({ locale, onLocaleChange }: { locale: Locale; onLocaleChan
           <LanguageRadioGroup locale={locale} onLocaleChange={onLocaleChange} />
         </Panel>
         <Panel title={t(locale, 'settings.securityCache')}>
-          <StatusPill icon={KeyRound} title={t(locale, 'settings.tokenEncryption')} value={t(locale, 'settings.secureStorage')} tone="ok" />
-          <StatusPill icon={Database} title={t(locale, 'settings.localDatabase')} value="userData/skillport" tone="info" />
-          <StatusPill icon={HardDrive} title={t(locale, 'settings.cacheDir')} value={t(locale, 'settings.cacheWritable')} tone="info" />
+          <StatusPill icon={KeyRound} title={t(locale, 'settings.tokenEncryption')} value={runtimeStatus?.tokenEncryption.backend ?? t(locale, 'settings.secureStorage')} tone={runtimeStatus?.tokenEncryption.available ? 'ok' : 'warn'} />
+          <StatusPill icon={Database} title={t(locale, 'settings.localDatabase')} value={runtimeStatus?.databasePath ?? 'userData/skillport/catalog.sqlite'} tone="info" />
+          <StatusPill icon={HardDrive} title={t(locale, 'settings.cacheDir')} value={runtimeStatus?.dataDir ?? t(locale, 'settings.cacheWritable')} tone="info" />
         </Panel>
       </div>
     </section>

@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { ensureDataDirs } from './services/demo-data'
 import { registerIpc } from './ipc'
+import { initializeRuntime } from './services/runtime'
 
 const isDev = Boolean(process.env.ELECTRON_RENDERER_URL)
 
@@ -43,7 +44,8 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   const dataDir = join(app.getPath('userData'), 'skillport')
   await ensureDataDirs(dataDir)
-  registerIpc(dataDir)
+  const runtime = await initializeRuntime(dataDir)
+  registerIpc(runtime)
   createWindow()
 
   app.on('activate', () => {

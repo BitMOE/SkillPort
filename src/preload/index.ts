@@ -42,6 +42,13 @@ const api: SkillPortApi = {
   },
   dashboard: {
     summary: () => invoke('dashboard:summary')
+  },
+  runtime: {
+    status: () => invoke('runtime:status'),
+    config: () => invoke('runtime:config')
+  },
+  security: {
+    tokenStatus: () => invoke('security:token-status')
   }
 }
 

@@ -14,6 +14,7 @@ import {
   sources,
   timestampedJob
 } from './services/demo-data'
+import type { RuntimeServices } from './services/runtime'
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -46,8 +47,14 @@ const ruleApplySchema = rulePreviewSchema.extend({
   selectedRuleIds: z.array(z.string())
 })
 
-export function registerIpc(dataDir: string): void {
+export function registerIpc(runtime: RuntimeServices): void {
   handle('dashboard:summary', () => dashboardSummary())
+  handle('runtime:status', () => runtime.status)
+  handle('runtime:config', () => runtime.config.load())
+  handle('security:token-status', () => ({
+    ...runtime.tokens.status(),
+    configuredTokens: runtime.tokens.listStates()
+  }))
 
   handle('catalog:search', (raw) => {
     const params = searchSchema.parse(raw ?? {})
@@ -98,7 +105,7 @@ export function registerIpc(dataDir: string): void {
 
   handle('install:create-plan', (raw) => {
     const params = planSchema.parse(raw)
-    return createInstallPlan(dataDir, params.itemId, params.platformKeys, params.scope, params.mode)
+    return createInstallPlan(runtime.dataDir, params.itemId, params.platformKeys, params.scope, params.mode)
   })
   handle('install:execute', (planId) => {
     const plan = installPlans.get(String(planId))

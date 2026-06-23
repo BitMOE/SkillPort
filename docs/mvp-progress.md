@@ -5,7 +5,7 @@ The implementation follows the milestones in `spec/skillport.md`.
 | MVP | Scope | Status | Evidence |
 | --- | --- | --- | --- |
 | M1 | Electron framework, secure window, preload API, i18n | Complete | `src/main/index.ts`, `src/preload/index.ts`, `src/shared/api.ts`, `src/renderer/src/i18n/*`, build passing |
-| M2 | SQLite, config system, logs, app data directory, token encryption | Pending | Not implemented yet |
+| M2 | SQLite, config system, logs, app data directory, token encryption | Complete | `src/main/services/storage/database.ts`, `src/main/services/config/config-service.ts`, `src/main/services/audit/log-service.ts`, `src/main/services/security/token-store.ts`, build passing |
 | M3 | Source management for GitHub, GitLab, skills.sh, local directory | Pending | Demo data only |
 | M4 | Catalog parsing, search, tags, versions | Pending | Demo data only |
 | M5 | Local scan in background worker, risk detection, import | Pending | Main-process scan only |

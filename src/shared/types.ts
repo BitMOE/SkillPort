@@ -131,3 +131,19 @@ export interface RulePackage {
   ruleCount: number
   enabledRules: number
 }
+
+export interface RuntimeStatus {
+  dataDir: string
+  databasePath: string
+  databaseReady: boolean
+  configPath: string
+  configReady: boolean
+  logsDir: string
+  logsReady: boolean
+  tokenEncryption: {
+    available: boolean
+    backend: string
+    protection: 'system' | 'basic' | 'unavailable'
+  }
+  initializedAt: string
+}
