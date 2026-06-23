@@ -13,7 +13,7 @@ The implementation follows the milestones in `spec/skillport.md`.
 | M7 | Install copy/symlink/junction/fallback, backup, rollback | Complete | `src/main/services/install/install-service.ts`, install plans, artifact materialization, backup-and-replace, copy/symlink/junction fallback, uninstall/rollback/openTargetDir IPC, build passing |
 | M8 | Rule Center package scan, diff, apply, rollback | Complete | `src/main/services/rules/rule-service.ts`, project rule target scan, managed block diff, backup + apply, `.skillport.lock.yaml`, rollback IPC, build passing |
 | M9 | Update Manager for Skills and Rules | Complete | `src/main/services/updates/update-service.ts`, content update policy, major-version/risk/trust gates, check/apply update IPC, build passing |
-| M10 | App packaging, signing policy, auto-update | Pending | Builder config only |
+| M10 | App packaging, signing policy, auto-update | Complete | `electron-builder` targets, GitHub draft publish config, `electron-updater` AppUpdateService, enterprise disable switch, `docs/release-and-signing.md`, build passing |
 | M11 | CLI, doctor, lockfile, import/export | Pending | Not implemented yet |
 | M12 | Beta hardening, security audit, recovery, docs | Pending | Not implemented yet |
 

@@ -166,3 +166,13 @@ export interface ContentUpdateCandidate {
   autoApplicable: boolean
   blockedReasons: string[]
 }
+
+export interface AppUpdateStatus {
+  provider: 'github' | 'generic' | 's3'
+  channel: 'stable' | 'beta' | 'alpha'
+  autoCheck: boolean
+  autoDownload: boolean
+  enterpriseDisabled: boolean
+  state: 'idle' | 'checking' | 'available' | 'not_available' | 'downloaded' | 'error'
+  message: string
+}

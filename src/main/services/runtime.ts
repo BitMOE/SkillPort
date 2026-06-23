@@ -9,6 +9,7 @@ import { RuleService } from './rules/rule-service'
 import { TokenStore } from './security/token-store'
 import { ScanService } from './scan/scan-service'
 import { SourceService } from './sources/source-service'
+import { AppUpdateService } from './updates/app-update-service'
 import { UpdateService } from './updates/update-service'
 import { SkillPortDatabase } from './storage/database'
 
@@ -25,6 +26,7 @@ export interface RuntimeServices {
   install: InstallService
   rules: RuleService
   updates: UpdateService
+  appUpdates: AppUpdateService
   status: RuntimeStatus
 }
 
@@ -40,6 +42,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
   const install = new InstallService(dataDir, database, catalog, platforms, logs)
   const rules = new RuleService(dataDir, platforms, logs)
   const updates = new UpdateService(database, catalog, logs)
+  const appUpdates = new AppUpdateService(database)
 
   await logs.ensure()
   const loadedConfig = await config.load()
@@ -76,6 +79,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
     install,
     rules,
     updates,
+    appUpdates,
     status
   }
 }

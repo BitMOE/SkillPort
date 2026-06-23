@@ -77,6 +77,9 @@ export function registerIpc(runtime: RuntimeServices): void {
   handle('updates:update-policy', (raw) => runtime.updates.updatePolicy(updatePolicySchema.parse(raw ?? {})))
   handle('updates:check-content', () => runtime.updates.checkContent())
   handle('updates:apply-content', (itemIds) => runtime.updates.applyContent(z.array(z.string()).parse(itemIds)))
+  handle('app-updates:status', () => runtime.appUpdates.status())
+  handle('app-updates:check', () => runtime.appUpdates.check())
+  handle('app-updates:set-enterprise-disabled', (disabled) => runtime.appUpdates.setEnterpriseDisabled(Boolean(disabled)))
 
   handle('catalog:search', (raw) => {
     const params = searchSchema.parse(raw ?? {})

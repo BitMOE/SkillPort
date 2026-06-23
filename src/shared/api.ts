@@ -9,7 +9,8 @@ import type {
   PlatformConfig,
   RulePackage,
   RuntimeStatus,
-  SourceConfig
+  SourceConfig,
+  AppUpdateStatus
 } from './types'
 import type { ContentUpdateCandidate, ContentUpdatePolicy } from './types'
 
@@ -79,5 +80,10 @@ export interface SkillPortApi {
     updatePolicy: (policy: Partial<ContentUpdatePolicy>) => Promise<ApiResult<ContentUpdatePolicy>>
     checkContent: () => Promise<ApiResult<ContentUpdateCandidate[]>>
     applyContent: (itemIds: string[]) => Promise<ApiResult<JobRecord>>
+  }
+  appUpdates: {
+    status: () => Promise<ApiResult<AppUpdateStatus>>
+    check: () => Promise<ApiResult<AppUpdateStatus>>
+    setEnterpriseDisabled: (disabled: boolean) => Promise<ApiResult<AppUpdateStatus>>
   }
 }

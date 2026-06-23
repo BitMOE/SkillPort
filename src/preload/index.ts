@@ -63,6 +63,11 @@ const api: SkillPortApi = {
     updatePolicy: (policy) => invoke('updates:update-policy', policy),
     checkContent: () => invoke('updates:check-content'),
     applyContent: (itemIds) => invoke('updates:apply-content', itemIds)
+  },
+  appUpdates: {
+    status: () => invoke('app-updates:status'),
+    check: () => invoke('app-updates:check'),
+    setEnterpriseDisabled: (disabled) => invoke('app-updates:set-enterprise-disabled', disabled)
   }
 }
 
