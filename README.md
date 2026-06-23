@@ -239,11 +239,13 @@ CLI 默认使用仓库内 `.skillport/`，该目录已被 `.gitignore` 忽略。
 
 | 平台 | Target |
 | --- | --- |
-| macOS | `dmg`, `zip` |
-| Windows | `nsis` |
+| macOS | `dmg`, `zip`, `tar.gz` |
+| Windows | `msi`, `portable` |
 | Linux | `AppImage`, `deb` |
 
 发布与签名策略见 [docs/release-and-signing.md](docs/release-and-signing.md)。
+
+GitHub Release 自动打包由 `.github/workflows/release-packages.yml` 负责：发布 `v*` 格式 tag 的 Release 时，会自动构建 Windows MSI、Windows Portable、macOS DMG、macOS ZIP 和 macOS tar.gz，并上传到该 Release。
 
 > ⚠️ 本地未签名构建仅适合开发测试。公开发布前需要配置 macOS Developer ID / notarization、Windows Authenticode、Linux 包签名或企业仓库策略。
 
@@ -538,11 +540,13 @@ Current `electron-builder` targets:
 
 | Platform | Target |
 | --- | --- |
-| macOS | `dmg`, `zip` |
-| Windows | `nsis` |
+| macOS | `dmg`, `zip`, `tar.gz` |
+| Windows | `msi`, `portable` |
 | Linux | `AppImage`, `deb` |
 
 Release and signing details are documented in [docs/release-and-signing.md](docs/release-and-signing.md).
+
+GitHub Release packaging is handled by `.github/workflows/release-packages.yml`: publishing a Release with a `v*` tag automatically builds Windows MSI, Windows Portable, macOS DMG, macOS ZIP, and macOS tar.gz assets, then uploads them to that Release.
 
 > ⚠️ Unsigned local builds are for development only. Public releases should configure macOS Developer ID / notarization, Windows Authenticode signing, and Linux package signing or enterprise repository policy.
 

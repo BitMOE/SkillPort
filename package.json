@@ -13,6 +13,8 @@
     "build": "tsc --noEmit && electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit",
+    "dist:win": "npm run build && electron-builder --win --x64 --publish never",
+    "dist:mac": "npm run build && electron-builder --mac --x64 --arm64 --publish never",
     "skillport": "node bin/skillport.mjs"
   },
   "dependencies": {
@@ -43,25 +45,29 @@
     "directories": {
       "output": "release"
     },
+    "artifactName": "${productName}-${version}-${platform}-${arch}.${ext}",
     "files": [
       "out/**"
     ],
     "publish": [
       {
         "provider": "github",
-        "owner": "acme",
-        "repo": "skillport",
-        "releaseType": "draft"
+        "releaseType": "release"
       }
     ],
     "mac": {
       "target": [
         "dmg",
-        "zip"
-      ]
+        "zip",
+        "tar.gz"
+      ],
+      "category": "public.app-category.developer-tools"
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        "msi",
+        "portable"
+      ]
     },
     "linux": {
       "target": [
