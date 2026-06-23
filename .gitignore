@@ -3,6 +3,7 @@ out/
 dist/
 release/
 .vite/
+.skillport/
 *.log
 *.local
 .env

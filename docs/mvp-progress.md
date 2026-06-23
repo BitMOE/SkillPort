@@ -14,7 +14,7 @@ The implementation follows the milestones in `spec/skillport.md`.
 | M8 | Rule Center package scan, diff, apply, rollback | Complete | `src/main/services/rules/rule-service.ts`, project rule target scan, managed block diff, backup + apply, `.skillport.lock.yaml`, rollback IPC, build passing |
 | M9 | Update Manager for Skills and Rules | Complete | `src/main/services/updates/update-service.ts`, content update policy, major-version/risk/trust gates, check/apply update IPC, build passing |
 | M10 | App packaging, signing policy, auto-update | Complete | `electron-builder` targets, GitHub draft publish config, `electron-updater` AppUpdateService, enterprise disable switch, `docs/release-and-signing.md`, build passing |
-| M11 | CLI, doctor, lockfile, import/export | Pending | Not implemented yet |
+| M11 | CLI, doctor, lockfile, import/export | Complete | `bin/skillport.mjs`, package bin, doctor, sources list, config import/export, lockfile write, CLI command catalog, build passing |
 | M12 | Beta hardening, security audit, recovery, docs | Pending | Not implemented yet |
 
 Each completed MVP should be committed separately.

@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "description": "Manager for team AI Skills, Rules, and multi-platform distribution.",
   "main": "out/main/index.js",
+  "bin": {
+    "skillport": "bin/skillport.mjs"
+  },
   "author": "SkillPort",
   "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "tsc --noEmit && electron-vite build",
     "preview": "electron-vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "skillport": "node bin/skillport.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",
