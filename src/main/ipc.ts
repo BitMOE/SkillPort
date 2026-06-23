@@ -1,13 +1,12 @@
 import { ipcMain } from 'electron'
 import { z } from 'zod'
-import type { ApiResult } from '../shared/types'
+import type { ApiResult, PlatformConfig } from '../shared/types'
 import {
   audit,
   createInstallPlan,
   dashboardSummary,
   installPlans,
   jobs,
-  platforms,
   rulePackages,
   timestampedJob
 } from './services/demo-data'
@@ -125,21 +124,10 @@ export function registerIpc(runtime: RuntimeServices): void {
     return timestampedJob('应用 Rule 包', params.packageId, `应用 ${params.selectedRuleIds.length} 条规则到 ${params.platformKeys.length} 个平台`)
   })
 
-  handle('platforms:list', () => platforms)
-  handle('platforms:update', (platformKey, config) => {
-    const platform = platforms.find((entry) => entry.key === String(platformKey))
-    if (!platform) throw new Error('平台不存在')
-    Object.assign(platform, config)
-    return platform
-  })
-  handle('platforms:reset', (platformKey) => {
-    const platform = platforms.find((entry) => entry.key === String(platformKey))
-    if (!platform) throw new Error('平台不存在')
-    platform.enabled = true
-    platform.installMode = 'copy'
-    platform.scanEnabled = true
-    return platform
-  })
+  handle('platforms:list', () => runtime.platforms.list())
+  handle('platforms:update', (platformKey, config) => runtime.platforms.update(String(platformKey), config as Partial<PlatformConfig>))
+  handle('platforms:reset', (platformKey) => runtime.platforms.reset(String(platformKey)))
+  handle('platforms:validate-target', (platformKey) => runtime.platforms.validateTarget(String(platformKey)))
 
   handle('jobs:list', () => jobs)
   handle('jobs:retry', (jobId) => timestampedJob('重试任务', String(jobId), '任务已重新排队'))

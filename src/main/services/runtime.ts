@@ -3,6 +3,7 @@ import type { RuntimeStatus } from '../../shared/types'
 import { LogService } from './audit/log-service'
 import { CatalogService } from './catalog/catalog-service'
 import { ConfigService } from './config/config-service'
+import { PlatformService } from './platforms/platform-service'
 import { TokenStore } from './security/token-store'
 import { ScanService } from './scan/scan-service'
 import { SourceService } from './sources/source-service'
@@ -17,6 +18,7 @@ export interface RuntimeServices {
   sources: SourceService
   catalog: CatalogService
   scan: ScanService
+  platforms: PlatformService
   status: RuntimeStatus
 }
 
@@ -28,12 +30,14 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
   const sources = new SourceService(database, logs)
   const catalog = new CatalogService(database, logs)
   const scan = new ScanService(catalog, logs)
+  const platforms = new PlatformService(database)
 
   await logs.ensure()
   const loadedConfig = await config.load()
   database.setSetting('app.config', loadedConfig)
   sources.seedDefaults()
   catalog.seedDefaults()
+  await platforms.seedDefaults()
 
   const status: RuntimeStatus = {
     dataDir,
@@ -59,6 +63,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
     sources,
     catalog,
     scan,
+    platforms,
     status
   }
 }

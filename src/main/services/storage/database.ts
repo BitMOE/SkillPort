@@ -229,6 +229,34 @@ export class SkillPortDatabase {
     return this.listCatalogItems().find((item) => item.id === id)
   }
 
+  upsertPlatform(platform: { key: string; config: Record<string, unknown> }): void {
+    this.db
+      .prepare(
+        `INSERT INTO platforms (key, config_json, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key) DO UPDATE SET config_json = excluded.config_json, updated_at = excluded.updated_at`
+      )
+      .run(platform.key, JSON.stringify(platform.config), new Date().toISOString())
+  }
+
+  listPlatforms(): Array<{ key: string; config: Record<string, unknown>; updatedAt: string }> {
+    return this.db
+      .prepare('SELECT key, config_json as configJson, updated_at as updatedAt FROM platforms ORDER BY key')
+      .all()
+      .map((row) => {
+        const value = row as { key: string; configJson: string; updatedAt: string }
+        return {
+          key: value.key,
+          config: JSON.parse(value.configJson) as Record<string, unknown>,
+          updatedAt: value.updatedAt
+        }
+      })
+  }
+
+  getPlatform(key: string): { key: string; config: Record<string, unknown>; updatedAt: string } | undefined {
+    return this.listPlatforms().find((platform) => platform.key === key)
+  }
+
   listTokenStates(): Array<{ provider: string; label: string; configured: boolean; updatedAt: string }> {
     return this.db
       .prepare('SELECT provider, label, updated_at as updatedAt FROM auth_tokens ORDER BY provider, label')

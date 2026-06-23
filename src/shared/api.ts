@@ -49,6 +49,7 @@ export interface SkillPortApi {
     list: () => Promise<ApiResult<PlatformConfig[]>>
     update: (platformKey: string, config: Partial<PlatformConfig>) => Promise<ApiResult<PlatformConfig>>
     reset: (platformKey: string) => Promise<ApiResult<PlatformConfig>>
+    validateTarget: (platformKey: string) => Promise<ApiResult<{ ok: boolean; messages: string[] }>>
   }
   jobs: {
     list: () => Promise<ApiResult<JobRecord[]>>

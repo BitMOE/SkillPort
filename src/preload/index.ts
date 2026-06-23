@@ -33,7 +33,8 @@ const api: SkillPortApi = {
   platforms: {
     list: () => invoke('platforms:list'),
     update: (platformKey, config) => invoke('platforms:update', platformKey, config),
-    reset: (platformKey) => invoke('platforms:reset', platformKey)
+    reset: (platformKey) => invoke('platforms:reset', platformKey),
+    validateTarget: (platformKey) => invoke('platforms:validate-target', platformKey)
   },
   jobs: {
     list: () => invoke('jobs:list'),
