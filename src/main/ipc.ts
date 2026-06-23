@@ -3,7 +3,6 @@ import { z } from 'zod'
 import type { ApiResult } from '../shared/types'
 import {
   audit,
-  catalogItems,
   createInstallPlan,
   dashboardSummary,
   installPlans,
@@ -74,35 +73,11 @@ export function registerIpc(runtime: RuntimeServices): void {
 
   handle('catalog:search', (raw) => {
     const params = searchSchema.parse(raw ?? {})
-    const query = params.query?.toLowerCase().trim()
-    return catalogItems.filter((item) => {
-      const matchesQuery = !query || [item.name, item.description, item.tags.join(' ')].join(' ').toLowerCase().includes(query)
-      const matchesPlatform = !params.platform || params.platform === 'all' || item.platforms.includes(params.platform)
-      const matchesStatus =
-        !params.status ||
-        params.status === 'all' ||
-        (params.status === 'installed' && item.installed) ||
-        (params.status === 'updateable' && Boolean(item.updateVersion)) ||
-        (params.status === 'uninstalled' && !item.installed)
-      const matchesTrust = !params.trustLevel || params.trustLevel === 'all' || item.trustLevel === params.trustLevel
-      return matchesQuery && matchesPlatform && matchesStatus && matchesTrust
-    })
+    return runtime.catalog.search(params)
   })
 
-  handle('catalog:get-detail', (id) => {
-    const item = catalogItems.find((entry) => entry.id === String(id))
-    if (!item) throw new Error('Skill 不存在')
-    return item
-  })
-
-  handle('catalog:validate', (id) => {
-    const item = catalogItems.find((entry) => entry.id === String(id))
-    if (!item) throw new Error('Skill 不存在')
-    return {
-      valid: item.riskCount === 0,
-      risks: item.riskCount > 0 ? ['包含 scripts/ 目录', '缺少 version 字段或版本不可验证'] : []
-    }
-  })
+  handle('catalog:get-detail', (id) => runtime.catalog.getDetail(String(id)))
+  handle('catalog:validate', (id) => runtime.catalog.validate(String(id)))
 
   handle('sources:list', () => runtime.sources.list())
   handle('sources:upsert', (raw) => runtime.sources.upsert(sourceSchema.parse(raw)))

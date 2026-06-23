@@ -115,6 +115,120 @@ export class SkillPortDatabase {
     return result.changes > 0
   }
 
+  upsertCatalogItem(item: {
+    id: string
+    type: string
+    sourceId: string
+    slug: string
+    name: string
+    description?: string
+    version?: string
+    tags: string[]
+    trustLevel: string
+    checksum: string
+    sourcePath: string
+    metadata: Record<string, unknown>
+  }): void {
+    this.db
+      .prepare(
+        `INSERT INTO catalog_items (
+          id, type, source_id, slug, name, description, version,
+          tags_json, trust_level, checksum, source_path, metadata_json, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          type = excluded.type,
+          source_id = excluded.source_id,
+          slug = excluded.slug,
+          name = excluded.name,
+          description = excluded.description,
+          version = excluded.version,
+          tags_json = excluded.tags_json,
+          trust_level = excluded.trust_level,
+          checksum = excluded.checksum,
+          source_path = excluded.source_path,
+          metadata_json = excluded.metadata_json,
+          updated_at = excluded.updated_at`
+      )
+      .run(
+        item.id,
+        item.type,
+        item.sourceId,
+        item.slug,
+        item.name,
+        item.description ?? null,
+        item.version ?? null,
+        JSON.stringify(item.tags),
+        item.trustLevel,
+        item.checksum,
+        item.sourcePath,
+        JSON.stringify(item.metadata),
+        new Date().toISOString()
+      )
+  }
+
+  listCatalogItems(): Array<{
+    id: string
+    type: string
+    sourceId: string
+    slug: string
+    name: string
+    description: string
+    version?: string
+    tags: string[]
+    trustLevel: string
+    checksum: string
+    sourcePath: string
+    metadata: Record<string, unknown>
+    updatedAt: string
+  }> {
+    return this.db
+      .prepare(
+        `SELECT id, type, source_id as sourceId, slug, name, description, version,
+          tags_json as tagsJson, trust_level as trustLevel, checksum, source_path as sourcePath,
+          metadata_json as metadataJson, updated_at as updatedAt
+         FROM catalog_items
+         ORDER BY name`
+      )
+      .all()
+      .map((row) => {
+        const value = row as {
+          id: string
+          type: string
+          sourceId: string
+          slug: string
+          name: string
+          description: string | null
+          version: string | null
+          tagsJson: string
+          trustLevel: string
+          checksum: string
+          sourcePath: string
+          metadataJson: string
+          updatedAt: string
+        }
+        return {
+          id: value.id,
+          type: value.type,
+          sourceId: value.sourceId,
+          slug: value.slug,
+          name: value.name,
+          description: value.description ?? '',
+          version: value.version ?? undefined,
+          tags: JSON.parse(value.tagsJson) as string[],
+          trustLevel: value.trustLevel,
+          checksum: value.checksum,
+          sourcePath: value.sourcePath,
+          metadata: JSON.parse(value.metadataJson) as Record<string, unknown>,
+          updatedAt: value.updatedAt
+        }
+      })
+  }
+
+  getCatalogItem(id: string): ReturnType<SkillPortDatabase['listCatalogItems']>[number] | undefined {
+    return this.listCatalogItems().find((item) => item.id === id)
+  }
+
   listTokenStates(): Array<{ provider: string; label: string; configured: boolean; updatedAt: string }> {
     return this.db
       .prepare('SELECT provider, label, updated_at as updatedAt FROM auth_tokens ORDER BY provider, label')
