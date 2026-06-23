@@ -43,12 +43,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          shopt -s nullglob
-          assets=(release/*.msi release/*.exe release/latest*.yml)
+          assets=()
+          while IFS= read -r asset; do
+            assets+=("$asset")
+          done < <(find release -maxdepth 1 -type f \( -name "*.msi" -o -name "*.exe" -o -name "latest*.yml" \) | sort -u)
           if [ ${#assets[@]} -eq 0 ]; then
             echo "No Windows release assets found."
             exit 1
           fi
+          printf 'Uploading Windows asset: %s\n' "${assets[@]}"
           gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
 
   build-macos:
@@ -81,10 +84,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          shopt -s nullglob
-          assets=(release/*.dmg release/*.zip release/*.tar.gz release/latest*.yml release/*-mac.yml)
+          assets=()
+          while IFS= read -r asset; do
+            assets+=("$asset")
+          done < <(find release -maxdepth 1 -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.tar.gz" -o -name "latest*.yml" -o -name "*-mac.yml" \) | sort -u)
           if [ ${#assets[@]} -eq 0 ]; then
             echo "No macOS release assets found."
             exit 1
           fi
+          printf 'Uploading macOS asset: %s\n' "${assets[@]}"
           gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
