@@ -39,6 +39,9 @@ export interface SkillPortApi {
       mode: 'copy' | 'symlink'
     }) => Promise<ApiResult<InstallPlan>>
     execute: (planId: string) => Promise<ApiResult<JobRecord>>
+    uninstall: (installationId: string) => Promise<ApiResult<JobRecord>>
+    rollback: (installationId: string, backupPath: string) => Promise<ApiResult<JobRecord>>
+    openTargetDir: (targetPath: string) => Promise<ApiResult<{ opened: boolean }>>
   }
   rules: {
     list: () => Promise<ApiResult<RulePackage[]>>

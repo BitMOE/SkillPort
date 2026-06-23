@@ -23,7 +23,10 @@ const api: SkillPortApi = {
   },
   install: {
     createPlan: (params) => invoke('install:create-plan', params),
-    execute: (planId) => invoke('install:execute', planId)
+    execute: (planId) => invoke('install:execute', planId),
+    uninstall: (installationId) => invoke('install:uninstall', installationId),
+    rollback: (installationId, backupPath) => invoke('install:rollback', installationId, backupPath),
+    openTargetDir: (targetPath) => invoke('install:open-target-dir', targetPath)
   },
   rules: {
     list: () => invoke('rules:list'),

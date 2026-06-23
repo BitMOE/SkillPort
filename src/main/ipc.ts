@@ -3,9 +3,7 @@ import { z } from 'zod'
 import type { ApiResult, PlatformConfig } from '../shared/types'
 import {
   audit,
-  createInstallPlan,
   dashboardSummary,
-  installPlans,
   jobs,
   rulePackages,
   timestampedJob
@@ -96,13 +94,14 @@ export function registerIpc(runtime: RuntimeServices): void {
 
   handle('install:create-plan', (raw) => {
     const params = planSchema.parse(raw)
-    return createInstallPlan(runtime.dataDir, params.itemId, params.platformKeys, params.scope, params.mode)
+    return runtime.install.createPlan(params)
   })
   handle('install:execute', (planId) => {
-    const plan = installPlans.get(String(planId))
-    if (!plan) throw new Error('安装计划不存在或已过期')
-    return timestampedJob('安装 Skill', plan.itemId, `已写入 ${plan.targets.length} 个平台目标`)
+    return runtime.install.execute(String(planId))
   })
+  handle('install:uninstall', (installationId) => runtime.install.uninstall(String(installationId)))
+  handle('install:rollback', (installationId, backupPath) => runtime.install.rollback(String(installationId), String(backupPath)))
+  handle('install:open-target-dir', (targetPath) => runtime.install.openTargetDir(String(targetPath)))
 
   handle('rules:list', () => rulePackages)
   handle('rules:preview-apply', (raw) => {

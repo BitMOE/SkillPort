@@ -257,6 +257,27 @@ export class SkillPortDatabase {
     return this.listPlatforms().find((platform) => platform.key === key)
   }
 
+  addInstallation(record: {
+    id: string
+    itemId: string
+    platformKey: string
+    scope: string
+    targetPath: string
+    mode: string
+  }): void {
+    this.db
+      .prepare(
+        `INSERT INTO installations (id, item_id, platform_key, scope, target_path, mode, installed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(record.id, record.itemId, record.platformKey, record.scope, record.targetPath, record.mode, new Date().toISOString())
+  }
+
+  removeInstallation(id: string): boolean {
+    const result = this.db.prepare('DELETE FROM installations WHERE id = ?').run(id)
+    return result.changes > 0
+  }
+
   listTokenStates(): Array<{ provider: string; label: string; configured: boolean; updatedAt: string }> {
     return this.db
       .prepare('SELECT provider, label, updated_at as updatedAt FROM auth_tokens ORDER BY provider, label')

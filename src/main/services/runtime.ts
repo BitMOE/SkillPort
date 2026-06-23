@@ -3,6 +3,7 @@ import type { RuntimeStatus } from '../../shared/types'
 import { LogService } from './audit/log-service'
 import { CatalogService } from './catalog/catalog-service'
 import { ConfigService } from './config/config-service'
+import { InstallService } from './install/install-service'
 import { PlatformService } from './platforms/platform-service'
 import { TokenStore } from './security/token-store'
 import { ScanService } from './scan/scan-service'
@@ -19,6 +20,7 @@ export interface RuntimeServices {
   catalog: CatalogService
   scan: ScanService
   platforms: PlatformService
+  install: InstallService
   status: RuntimeStatus
 }
 
@@ -31,6 +33,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
   const catalog = new CatalogService(database, logs)
   const scan = new ScanService(catalog, logs)
   const platforms = new PlatformService(database)
+  const install = new InstallService(dataDir, database, catalog, platforms, logs)
 
   await logs.ensure()
   const loadedConfig = await config.load()
@@ -64,6 +67,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
     catalog,
     scan,
     platforms,
+    install,
     status
   }
 }
