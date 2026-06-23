@@ -1,0 +1,20 @@
+# SkillPort MVP Progress
+
+The implementation follows the milestones in `spec/skillport.md`.
+
+| MVP | Scope | Status | Evidence |
+| --- | --- | --- | --- |
+| M1 | Electron framework, secure window, preload API, i18n | Complete | `src/main/index.ts`, `src/preload/index.ts`, `src/shared/api.ts`, `src/renderer/src/i18n/*`, build passing |
+| M2 | SQLite, config system, logs, app data directory, token encryption | Pending | Not implemented yet |
+| M3 | Source management for GitHub, GitLab, skills.sh, local directory | Pending | Demo data only |
+| M4 | Catalog parsing, search, tags, versions | Pending | Demo data only |
+| M5 | Local scan in background worker, risk detection, import | Pending | Main-process scan only |
+| M6 | Platform adapters, overrides, health checks | Pending | Static YAML only |
+| M7 | Install copy/symlink/junction/fallback, backup, rollback | Pending | Plan preview only |
+| M8 | Rule Center package scan, diff, apply, rollback | Pending | Demo diff only |
+| M9 | Update Manager for Skills and Rules | Pending | Demo update flags only |
+| M10 | App packaging, signing policy, auto-update | Pending | Builder config only |
+| M11 | CLI, doctor, lockfile, import/export | Pending | Not implemented yet |
+| M12 | Beta hardening, security audit, recovery, docs | Pending | Not implemented yet |
+
+Each completed MVP should be committed separately.

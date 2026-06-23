@@ -59,20 +59,21 @@ import type {
   RulePackage,
   SourceConfig
 } from '../../shared/types'
+import { defaultLocale, languageOptions, nextLocale, t, type Locale, type TranslationKey } from './i18n'
 
 type ViewKey = 'dashboard' | 'store' | 'installed' | 'scan' | 'rules' | 'projects' | 'sources' | 'platforms' | 'jobs' | 'settings'
 
-const navItems: Array<{ key: ViewKey; label: string; icon: typeof LayoutDashboard }> = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'store', label: 'Skill Store', icon: Grid2X2 },
-  { key: 'installed', label: '已安装 Skills', icon: PackageCheck },
-  { key: 'scan', label: '本地扫描', icon: ClipboardList },
-  { key: 'rules', label: 'Rule Center', icon: Wrench },
-  { key: 'projects', label: 'Projects', icon: Folder },
-  { key: 'sources', label: 'Sources', icon: Cloud },
-  { key: 'platforms', label: 'Platform Settings', icon: Settings },
-  { key: 'jobs', label: 'Jobs & Audit', icon: ListChecks },
-  { key: 'settings', label: 'Settings', icon: SlidersHorizontal }
+const navItems: Array<{ key: ViewKey; labelKey: TranslationKey; icon: typeof LayoutDashboard }> = [
+  { key: 'dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { key: 'store', labelKey: 'nav.store', icon: Grid2X2 },
+  { key: 'installed', labelKey: 'nav.installed', icon: PackageCheck },
+  { key: 'scan', labelKey: 'nav.scan', icon: ClipboardList },
+  { key: 'rules', labelKey: 'nav.rules', icon: Wrench },
+  { key: 'projects', labelKey: 'nav.projects', icon: Folder },
+  { key: 'sources', labelKey: 'nav.sources', icon: Cloud },
+  { key: 'platforms', labelKey: 'nav.platforms', icon: Settings },
+  { key: 'jobs', labelKey: 'nav.jobs', icon: ListChecks },
+  { key: 'settings', labelKey: 'nav.settings', icon: SlidersHorizontal }
 ]
 
 const platformIconMap: Record<string, typeof Box> = {
@@ -96,6 +97,7 @@ const platformIconMap: Record<string, typeof Box> = {
 function App(): JSX.Element {
   const [activeView, setActiveView] = useState<ViewKey>('dashboard')
   const [query, setQuery] = useState('')
+  const [locale, setLocale] = useState<Locale>(() => readSavedLocale())
   const [summary, setSummary] = useState<DashboardSummary>()
   const [catalog, setCatalog] = useState<CatalogItem[]>([])
   const [sources, setSources] = useState<SourceConfig[]>([])
@@ -159,47 +161,47 @@ function App(): JSX.Element {
   const page = useMemo(() => {
     switch (activeView) {
       case 'dashboard':
-        return <Dashboard summary={summary} jobs={jobs} audit={audit} platforms={platforms} />
+        return <Dashboard locale={locale} summary={summary} jobs={jobs} audit={audit} platforms={platforms} />
       case 'store':
-        return <SkillStore catalog={catalog} selectedSkill={selectedSkill} onSelectSkill={setSelectedSkillId} platforms={platforms} />
+        return <SkillStore locale={locale} catalog={catalog} selectedSkill={selectedSkill} onSelectSkill={setSelectedSkillId} platforms={platforms} />
       case 'installed':
-        return <InstalledSkills catalog={catalog} selectedSkill={selectedSkill} onSelectSkill={setSelectedSkillId} platforms={platforms} />
+        return <InstalledSkills locale={locale} catalog={catalog} selectedSkill={selectedSkill} onSelectSkill={setSelectedSkillId} platforms={platforms} />
       case 'scan':
-        return <LocalScan results={scanResults} busy={busy} onRunScan={runScan} platforms={platforms} />
+        return <LocalScan locale={locale} results={scanResults} busy={busy} onRunScan={runScan} platforms={platforms} />
       case 'rules':
-        return <RuleCenter rules={rules} selectedRule={selectedRule} onSelectRule={setSelectedRuleId} />
+        return <RuleCenter locale={locale} rules={rules} selectedRule={selectedRule} onSelectRule={setSelectedRuleId} />
       case 'sources':
-        return <SourcesPage sources={sources} selectedSource={selectedSource} onSelectSource={setSelectedSourceId} />
+        return <SourcesPage locale={locale} sources={sources} selectedSource={selectedSource} onSelectSource={setSelectedSourceId} />
       case 'platforms':
-        return <PlatformSettings platforms={platforms} selectedPlatform={selectedPlatform} onSelectPlatform={setSelectedPlatformKey} />
+        return <PlatformSettings locale={locale} platforms={platforms} selectedPlatform={selectedPlatform} onSelectPlatform={setSelectedPlatformKey} />
       case 'jobs':
-        return <JobsAudit jobs={jobs} audit={audit} />
+        return <JobsAudit locale={locale} jobs={jobs} audit={audit} />
       case 'projects':
-        return <Projects platforms={platforms} />
+        return <Projects locale={locale} platforms={platforms} />
       case 'settings':
-        return <SettingsPage />
+        return <SettingsPage locale={locale} onLocaleChange={setAndSaveLocale(setLocale)} />
     }
-  }, [activeView, audit, busy, catalog, jobs, platforms, rules, scanResults, selectedPlatform, selectedRule, selectedSkill, selectedSource, summary])
+  }, [activeView, audit, busy, catalog, jobs, locale, platforms, rules, scanResults, selectedPlatform, selectedRule, selectedSkill, selectedSource, summary])
 
   return (
     <div className="shell">
-      <Sidebar activeView={activeView} onChange={setActiveView} />
+      <Sidebar activeView={activeView} locale={locale} onChange={setActiveView} />
       <div className="main">
-        <Topbar query={query} onQuery={setQuery} onSync={quickSync} busy={busy} />
+        <Topbar query={query} locale={locale} onLocaleChange={setAndSaveLocale(setLocale)} onQuery={setQuery} onSync={quickSync} busy={busy} />
         <main className="content">{page}</main>
       </div>
     </div>
   )
 }
 
-function Sidebar({ activeView, onChange }: { activeView: ViewKey; onChange: (view: ViewKey) => void }): JSX.Element {
+function Sidebar({ activeView, locale, onChange }: { activeView: ViewKey; locale: Locale; onChange: (view: ViewKey) => void }): JSX.Element {
   return (
     <aside className="sidebar">
       <div className="brand">
         <div className="logo">SP</div>
         <div>
-          <strong>SkillPort</strong>
-          <span>v0.1.0</span>
+          <strong>{t(locale, 'app.name')}</strong>
+          <span>{t(locale, 'app.version')}</span>
         </div>
       </div>
       <nav className="nav">
@@ -208,7 +210,7 @@ function Sidebar({ activeView, onChange }: { activeView: ViewKey; onChange: (vie
           return (
             <button key={item.key} className={activeView === item.key ? 'active' : ''} onClick={() => onChange(item.key)}>
               <Icon size={18} />
-              <span>{item.label}</span>
+              <span>{t(locale, item.labelKey)}</span>
             </button>
           )
         })}
@@ -217,7 +219,7 @@ function Sidebar({ activeView, onChange }: { activeView: ViewKey; onChange: (vie
         <div className="mini-card">
           <HardDrive size={18} />
           <div>
-            <b>缓存空间</b>
+            <b>{t(locale, 'sidebar.cache')}</b>
             <span>12.4 GB / 50 GB</span>
           </div>
           <div className="meter">
@@ -227,8 +229,8 @@ function Sidebar({ activeView, onChange }: { activeView: ViewKey; onChange: (vie
         <div className="mini-card">
           <span className="dot ok" />
           <div>
-            <b>本地服务运行中</b>
-            <span>数据目录 ~/skillport</span>
+            <b>{t(locale, 'sidebar.localService')}</b>
+            <span>{t(locale, 'sidebar.dataDir')}</span>
           </div>
         </div>
       </div>
@@ -236,34 +238,48 @@ function Sidebar({ activeView, onChange }: { activeView: ViewKey; onChange: (vie
   )
 }
 
-function Topbar({ query, onQuery, onSync, busy }: { query: string; onQuery: (value: string) => void; onSync: () => void; busy: boolean }): JSX.Element {
+function Topbar({
+  query,
+  locale,
+  onLocaleChange,
+  onQuery,
+  onSync,
+  busy
+}: {
+  query: string
+  locale: Locale
+  onLocaleChange: (locale: Locale) => void
+  onQuery: (value: string) => void
+  onSync: () => void
+  busy: boolean
+}): JSX.Element {
   return (
     <header className="topbar">
       <button className="workspace">
         <UsersIcon />
-        <span>Acme 团队工作区</span>
+        <span>{t(locale, 'workspace.name')}</span>
         <ChevronDown size={16} />
       </button>
       <label className="global-search">
         <Search size={18} />
-        <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder="搜索 Skills、Rules、来源或项目..." />
+        <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder={t(locale, 'search.placeholder')} />
         <kbd>⌘K</kbd>
       </label>
       <button className="button" onClick={onSync}>
         {busy ? <Loader2 size={16} className="spin" /> : <RefreshCcw size={16} />}
-        立即同步
+        {t(locale, 'topbar.sync')}
       </button>
-      <button className="button ghost">
+      <button className="button ghost" onClick={() => onLocaleChange(nextLocale(locale))}>
         <Languages size={16} />
-        简 / 繁 / EN
+        {languageOptions.find((item) => item.locale === locale)?.label ?? t(locale, 'topbar.language')}
       </button>
-      <button className="icon-button" title="浅色主题">
+      <button className="icon-button" title={t(locale, 'topbar.lightTheme')}>
         <Sun size={17} />
       </button>
-      <button className="icon-button active-toggle" title="深色跟随系统">
+      <button className="icon-button active-toggle" title={t(locale, 'topbar.darkTheme')}>
         <Moon size={17} />
       </button>
-      <button className="icon-button notification" title="通知">
+      <button className="icon-button notification" title={t(locale, 'topbar.notifications')}>
         <Bell size={17} />
         <span>3</span>
       </button>
@@ -273,11 +289,13 @@ function Topbar({ query, onQuery, onSync, busy }: { query: string; onQuery: (val
 }
 
 function Dashboard({
+  locale,
   summary,
   jobs,
   audit,
   platforms
 }: {
+  locale: Locale
   summary?: DashboardSummary
   jobs: JobRecord[]
   audit: AuditRecord[]
@@ -285,7 +303,7 @@ function Dashboard({
 }): JSX.Element {
   return (
     <section>
-      <PageTitle title="仪表盘" description="本地优先的 Skills & Rules 管理中心，统一管理与分发到各 AI 编码平台。" />
+      <PageTitle title={t(locale, 'page.dashboard.title')} description={t(locale, 'page.dashboard.description')} />
       <div className="kpi-grid four">
         <Kpi icon={Box} label="已安装 Skills" value={summary?.installedSkills ?? 128} delta="12 (10.3%)" tone="blue" trend />
         <Kpi icon={Upload} label="可更新 Skills" value={summary?.updateableSkills ?? 15} delta="3 (25.0%)" tone="purple" />
@@ -322,11 +340,13 @@ function Dashboard({
 }
 
 function SkillStore({
+  locale,
   catalog,
   selectedSkill,
   onSelectSkill,
   platforms
 }: {
+  locale: Locale
   catalog: CatalogItem[]
   selectedSkill?: CatalogItem
   onSelectSkill: (id: string) => void
@@ -334,7 +354,7 @@ function SkillStore({
 }): JSX.Element {
   return (
     <section>
-      <PageTitle title="Skill 商店" description="浏览、筛选、预览并从多个来源安装 Skill，扩展团队能力。" />
+      <PageTitle title={t(locale, 'page.store.title')} description={t(locale, 'page.store.description')} />
       <FilterBar labels={['来源', '标签', '平台兼容', '状态', '信任等级']} />
       <div className="kpi-grid compact">
         <Kpi icon={Box} label="商店部数量" value={catalog.length + 2} delta="所有来源" tone="blue" />
@@ -362,11 +382,13 @@ function SkillStore({
 }
 
 function InstalledSkills({
+  locale,
   catalog,
   selectedSkill,
   onSelectSkill,
   platforms
 }: {
+  locale: Locale
   catalog: CatalogItem[]
   selectedSkill?: CatalogItem
   onSelectSkill: (id: string) => void
@@ -375,7 +397,7 @@ function InstalledSkills({
   const installed = catalog.filter((item) => item.installed)
   return (
     <section>
-      <PageTitle title="已安装 Skills" description="查看与管理已在各平台与项目中安装的 Skills。" />
+      <PageTitle title={t(locale, 'page.installed.title')} description={t(locale, 'page.installed.description')} />
       <div className="kpi-grid six">
         <Kpi icon={ClipboardList} label="总安装数" value="128" delta="12 (10.3%)" tone="blue" />
         <Kpi icon={Monitor} label="平台数" value="6" delta="0 (0%)" tone="purple" />
@@ -439,11 +461,13 @@ function InstalledSkills({
 }
 
 function LocalScan({
+  locale,
   results,
   busy,
   onRunScan,
   platforms
 }: {
+  locale: Locale
   results: LocalSkillCandidate[]
   busy: boolean
   onRunScan: () => void
@@ -453,7 +477,7 @@ function LocalScan({
   const selected = rows[0]
   return (
     <section>
-      <PageTitle title="本地扫描" description="自动发现本地的 SKILL.md 文件，无需复制粘贴，一键导入并分发到多平台。" />
+      <PageTitle title={t(locale, 'page.scan.title')} description={t(locale, 'page.scan.description')} />
       <div className="scan-config">
         <div>
           <b>扫描配置</b>
@@ -534,10 +558,20 @@ function LocalScan({
   )
 }
 
-function RuleCenter({ rules, selectedRule, onSelectRule }: { rules: RulePackage[]; selectedRule?: RulePackage; onSelectRule: (id: string) => void }): JSX.Element {
+function RuleCenter({
+  locale,
+  rules,
+  selectedRule,
+  onSelectRule
+}: {
+  locale: Locale
+  rules: RulePackage[]
+  selectedRule?: RulePackage
+  onSelectRule: (id: string) => void
+}): JSX.Element {
   return (
     <section>
-      <PageTitle title="Rule Center" description="集中管理项目规则、AGENTS.md、CLAUDE.md、.cursor/rules 及 Rule 包，实现统一分发与版本治理。" />
+      <PageTitle title={t(locale, 'page.rules.title')} description={t(locale, 'page.rules.description')} />
       <div className="kpi-grid four">
         <Kpi icon={Box} label="Rule 包数量" value="28" delta="所有来源规则包总数" tone="blue" />
         <Kpi icon={Folder} label="已扫描项目数" value="9" delta="已关联并扫描的项目" tone="green" />
@@ -608,10 +642,12 @@ function RuleCenter({ rules, selectedRule, onSelectRule }: { rules: RulePackage[
 }
 
 function SourcesPage({
+  locale,
   sources,
   selectedSource,
   onSelectSource
 }: {
+  locale: Locale
   sources: SourceConfig[]
   selectedSource?: SourceConfig
   onSelectSource: (id: string) => void
@@ -619,7 +655,7 @@ function SourcesPage({
   return (
     <section>
       <div className="page-header">
-        <PageTitle title="商店源 / Sources" description="管理 GitHub、GitLab、自托管 GitLab、skills.sh 和本地源，用于同步 Skills 与 Rules。" />
+        <PageTitle title={t(locale, 'page.sources.title')} description={t(locale, 'page.sources.description')} />
         <div className="header-actions">
           <button className="primary">
             <Plus size={16} />
@@ -694,17 +730,19 @@ function SourcesPage({
 }
 
 function PlatformSettings({
+  locale,
   platforms,
   selectedPlatform,
   onSelectPlatform
 }: {
+  locale: Locale
   platforms: PlatformConfig[]
   selectedPlatform?: PlatformConfig
   onSelectPlatform: (key: string) => void
 }): JSX.Element {
   return (
     <section>
-      <PageTitle title="平台设置" description="配置各平台的 Skill 目录、Rule 目标、安装模式与扫描行为。" />
+      <PageTitle title={t(locale, 'page.platforms.title')} description={t(locale, 'page.platforms.description')} />
       <div className="kpi-grid four">
         <Kpi icon={Box} label="已配置平台数" value="15 / 16" delta="当前可用平台" tone="blue" />
         <Kpi icon={Folder} label="使用默认目录数" value="10" delta="官方默认路径" tone="green" />
@@ -786,10 +824,10 @@ function PlatformSettings({
   )
 }
 
-function JobsAudit({ jobs, audit }: { jobs: JobRecord[]; audit: AuditRecord[] }): JSX.Element {
+function JobsAudit({ locale, jobs, audit }: { locale: Locale; jobs: JobRecord[]; audit: AuditRecord[] }): JSX.Element {
   return (
     <section>
-      <PageTitle title="Jobs & Audit" description="查看后台任务、实时日志、审计记录、失败重试和历史清理。" />
+      <PageTitle title={t(locale, 'page.jobs.title')} description={t(locale, 'page.jobs.description')} />
       <div className="dashboard-grid equal">
         <Panel title="后台任务" action="清理历史">
           <TaskTable jobs={jobs} />
@@ -802,10 +840,10 @@ function JobsAudit({ jobs, audit }: { jobs: JobRecord[]; audit: AuditRecord[] })
   )
 }
 
-function Projects({ platforms }: { platforms: PlatformConfig[] }): JSX.Element {
+function Projects({ locale, platforms }: { locale: Locale; platforms: PlatformConfig[] }): JSX.Element {
   return (
     <section>
-      <PageTitle title="Projects" description="管理项目根目录、项目级 Skills、Rules、lockfile 与分发策略。" />
+      <PageTitle title={t(locale, 'page.projects.title')} description={t(locale, 'page.projects.description')} />
       <div className="project-grid">
         {['E:/Projects/WebConsole', 'E:/Projects/PolarionTools', 'E:/Projects/AgentRules'].map((project, index) => (
           <Panel key={project} title={project} action={index === 0 ? '当前项目' : '打开'}>
@@ -824,21 +862,21 @@ function Projects({ platforms }: { platforms: PlatformConfig[] }): JSX.Element {
   )
 }
 
-function SettingsPage(): JSX.Element {
+function SettingsPage({ locale, onLocaleChange }: { locale: Locale; onLocaleChange: (locale: Locale) => void }): JSX.Element {
   return (
     <section>
-      <PageTitle title="Settings" description="配置语言、主题、离线模式、缓存、安全存储、自动更新与企业策略。" />
+      <PageTitle title={t(locale, 'page.settings.title')} description={t(locale, 'page.settings.description')} />
       <div className="settings-page-grid">
-        <Panel title="应用偏好">
-          <ToggleRow label="离线模式" checked={false} />
-          <ToggleRow label="启动时自动同步内容" checked />
-          <ToggleRow label="企业环境禁用 App 自动更新" checked={false} />
-          <RadioGroup title="语言" options={['简体中文', '繁體中文', 'English']} />
+        <Panel title={t(locale, 'settings.preferences')}>
+          <ToggleRow label={t(locale, 'settings.offlineMode')} checked={false} />
+          <ToggleRow label={t(locale, 'settings.autoSync')} checked />
+          <ToggleRow label={t(locale, 'settings.enterpriseUpdates')} checked={false} />
+          <LanguageRadioGroup locale={locale} onLocaleChange={onLocaleChange} />
         </Panel>
-        <Panel title="安全与缓存">
-          <StatusPill icon={KeyRound} title="Token 加密" value="系统安全存储" tone="ok" />
-          <StatusPill icon={Database} title="本地数据库" value="userData/skillport" tone="info" />
-          <StatusPill icon={HardDrive} title="缓存目录" value="可写，12.4 GB 已使用" tone="info" />
+        <Panel title={t(locale, 'settings.securityCache')}>
+          <StatusPill icon={KeyRound} title={t(locale, 'settings.tokenEncryption')} value={t(locale, 'settings.secureStorage')} tone="ok" />
+          <StatusPill icon={Database} title={t(locale, 'settings.localDatabase')} value="userData/skillport" tone="info" />
+          <StatusPill icon={HardDrive} title={t(locale, 'settings.cacheDir')} value={t(locale, 'settings.cacheWritable')} tone="info" />
         </Panel>
       </div>
     </section>
@@ -1276,6 +1314,20 @@ function CheckboxGroup({ title, options }: { title: string; options: string[] })
   )
 }
 
+function LanguageRadioGroup({ locale, onLocaleChange }: { locale: Locale; onLocaleChange: (locale: Locale) => void }): JSX.Element {
+  return (
+    <div className="option-group">
+      <b>{t(locale, 'settings.language')}</b>
+      {languageOptions.map((option) => (
+        <label key={option.locale}>
+          <input type="radio" name="language" checked={locale === option.locale} onChange={() => onLocaleChange(option.locale)} />
+          {option.label}
+        </label>
+      ))}
+    </div>
+  )
+}
+
 function RadioInline({ options, active }: { options: string[]; active: number }): JSX.Element {
   return (
     <div className="radio-inline">
@@ -1415,6 +1467,19 @@ function sourceLabel(sourceId: string): string {
 
 function trustLabel(level: string): string {
   return ({ official: '官方', team: '团队', community: '社区', unknown: '未知' } as Record<string, string>)[level] ?? level
+}
+
+function readSavedLocale(): Locale {
+  if (typeof window === 'undefined') return defaultLocale
+  const saved = window.localStorage.getItem('skillport.locale')
+  return languageOptions.some((item) => item.locale === saved) ? (saved as Locale) : defaultLocale
+}
+
+function setAndSaveLocale(setLocale: (locale: Locale) => void): (locale: Locale) => void {
+  return (locale) => {
+    window.localStorage.setItem('skillport.locale', locale)
+    setLocale(locale)
+  }
 }
 
 export default App
