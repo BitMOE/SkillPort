@@ -11,7 +11,7 @@ The implementation follows the milestones in `spec/skillport.md`.
 | M5 | Local scan in background worker, risk detection, import | Complete | `src/main/services/scan/scan-service.ts`, Worker Thread scan, scripts/executable/hidden-comment/link/version risks, import to Catalog, build passing |
 | M6 | Platform adapters, overrides, health checks | Complete | `src/main/services/platforms/platform-service.ts`, YAML adapter loading, persisted platform overrides, reset defaults, validateTarget health checks, build passing |
 | M7 | Install copy/symlink/junction/fallback, backup, rollback | Complete | `src/main/services/install/install-service.ts`, install plans, artifact materialization, backup-and-replace, copy/symlink/junction fallback, uninstall/rollback/openTargetDir IPC, build passing |
-| M8 | Rule Center package scan, diff, apply, rollback | Pending | Demo diff only |
+| M8 | Rule Center package scan, diff, apply, rollback | Complete | `src/main/services/rules/rule-service.ts`, project rule target scan, managed block diff, backup + apply, `.skillport.lock.yaml`, rollback IPC, build passing |
 | M9 | Update Manager for Skills and Rules | Pending | Demo update flags only |
 | M10 | App packaging, signing policy, auto-update | Pending | Builder config only |
 | M11 | CLI, doctor, lockfile, import/export | Pending | Not implemented yet |

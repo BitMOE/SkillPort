@@ -30,8 +30,10 @@ const api: SkillPortApi = {
   },
   rules: {
     list: () => invoke('rules:list'),
+    scanProject: (projectRoot) => invoke('rules:scan-project', projectRoot),
     previewApply: (params) => invoke('rules:preview-apply', params),
-    applyPackage: (params) => invoke('rules:apply-package', params)
+    applyPackage: (params) => invoke('rules:apply-package', params),
+    rollback: (applicationId) => invoke('rules:rollback', applicationId)
   },
   platforms: {
     list: () => invoke('platforms:list'),

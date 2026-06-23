@@ -45,8 +45,10 @@ export interface SkillPortApi {
   }
   rules: {
     list: () => Promise<ApiResult<RulePackage[]>>
+    scanProject: (projectRoot: string) => Promise<ApiResult<{ projectRoot: string; targets: Array<{ path: string; exists: boolean; managedBlocks: number }> }>>
     previewApply: (params: { packageId: string; projectRoot: string; platformKeys: string[] }) => Promise<ApiResult<{ diff: string }>>
     applyPackage: (params: { packageId: string; projectRoot: string; platformKeys: string[]; selectedRuleIds: string[] }) => Promise<ApiResult<JobRecord>>
+    rollback: (applicationId: string) => Promise<ApiResult<JobRecord>>
   }
   platforms: {
     list: () => Promise<ApiResult<PlatformConfig[]>>

@@ -5,7 +5,6 @@ import {
   audit,
   dashboardSummary,
   jobs,
-  rulePackages,
   timestampedJob
 } from './services/demo-data'
 import type { RuntimeServices } from './services/runtime'
@@ -103,25 +102,14 @@ export function registerIpc(runtime: RuntimeServices): void {
   handle('install:rollback', (installationId, backupPath) => runtime.install.rollback(String(installationId), String(backupPath)))
   handle('install:open-target-dir', (targetPath) => runtime.install.openTargetDir(String(targetPath)))
 
-  handle('rules:list', () => rulePackages)
-  handle('rules:preview-apply', (raw) => {
-    const params = rulePreviewSchema.parse(raw)
-    return {
-      diff: [
-        `@@ -12,7 +12,16 @@ ${params.projectRoot}`,
-        '- 使用 CSS Modules 管理组件样式',
-        '- 避免内联样式',
-        '+ 使用 Tailwind CSS 进行样式开发',
-        '+ 遵循 Atomic Design 组件设计原则',
-        '+ 组件 props 使用 TypeScript 严格类型',
-        '+ 优先使用 Server Components'
-      ].join('\n')
-    }
-  })
+  handle('rules:list', () => runtime.rules.list())
+  handle('rules:scan-project', (projectRoot) => runtime.rules.scanProject(String(projectRoot)))
+  handle('rules:preview-apply', (raw) => runtime.rules.previewApply(rulePreviewSchema.parse(raw)))
   handle('rules:apply-package', (raw) => {
     const params = ruleApplySchema.parse(raw)
-    return timestampedJob('应用 Rule 包', params.packageId, `应用 ${params.selectedRuleIds.length} 条规则到 ${params.platformKeys.length} 个平台`)
+    return runtime.rules.applyPackage(params)
   })
+  handle('rules:rollback', (applicationId) => runtime.rules.rollback(String(applicationId)))
 
   handle('platforms:list', () => runtime.platforms.list())
   handle('platforms:update', (platformKey, config) => runtime.platforms.update(String(platformKey), config as Partial<PlatformConfig>))
