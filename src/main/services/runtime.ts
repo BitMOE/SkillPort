@@ -4,6 +4,7 @@ import { LogService } from './audit/log-service'
 import { CatalogService } from './catalog/catalog-service'
 import { ConfigService } from './config/config-service'
 import { TokenStore } from './security/token-store'
+import { ScanService } from './scan/scan-service'
 import { SourceService } from './sources/source-service'
 import { SkillPortDatabase } from './storage/database'
 
@@ -15,6 +16,7 @@ export interface RuntimeServices {
   tokens: TokenStore
   sources: SourceService
   catalog: CatalogService
+  scan: ScanService
   status: RuntimeStatus
 }
 
@@ -25,6 +27,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
   const tokens = new TokenStore(database)
   const sources = new SourceService(database, logs)
   const catalog = new CatalogService(database, logs)
+  const scan = new ScanService(catalog, logs)
 
   await logs.ensure()
   const loadedConfig = await config.load()
@@ -55,6 +58,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
     tokens,
     sources,
     catalog,
+    scan,
     status
   }
 }

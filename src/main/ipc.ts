@@ -9,7 +9,6 @@ import {
   jobs,
   platforms,
   rulePackages,
-  scanLocalSkills,
   timestampedJob
 } from './services/demo-data'
 import type { RuntimeServices } from './services/runtime'
@@ -88,12 +87,12 @@ export function registerIpc(runtime: RuntimeServices): void {
 
   handle('scan:start', async (raw) => {
     const params = scanSchema.parse(raw)
-    const results = await scanLocalSkills(params.roots, params.ignore)
+    const results = await runtime.scan.start(params)
     return results.length > 0 ? results : demoScanResults()
   })
   handle('scan:import-candidate', (raw) => {
     const params = z.object({ candidateId: z.string(), mode: z.enum(['copy', 'symlink']) }).parse(raw)
-    return timestampedJob('导入 Skill', params.candidateId, `以 ${params.mode} 模式导入并分发`)
+    return runtime.scan.importCandidate(params)
   })
 
   handle('install:create-plan', (raw) => {
