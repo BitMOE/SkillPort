@@ -7,8 +7,11 @@ import type {
   JobRecord,
   LocalSkillCandidate,
   PlatformConfig,
+  PerformanceSnapshot,
+  RecoveryReport,
   RulePackage,
   RuntimeStatus,
+  SecurityAuditReport,
   SourceConfig,
   AppUpdateStatus
 } from './types'
@@ -85,5 +88,10 @@ export interface SkillPortApi {
     status: () => Promise<ApiResult<AppUpdateStatus>>
     check: () => Promise<ApiResult<AppUpdateStatus>>
     setEnterpriseDisabled: (disabled: boolean) => Promise<ApiResult<AppUpdateStatus>>
+  }
+  hardening: {
+    securityAudit: () => Promise<ApiResult<SecurityAuditReport>>
+    recoverRuntime: () => Promise<ApiResult<RecoveryReport>>
+    performanceSnapshot: () => Promise<ApiResult<PerformanceSnapshot>>
   }
 }

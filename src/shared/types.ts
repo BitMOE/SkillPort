@@ -176,3 +176,46 @@ export interface AppUpdateStatus {
   state: 'idle' | 'checking' | 'available' | 'not_available' | 'downloaded' | 'error'
   message: string
 }
+
+export interface SecurityAuditCheck {
+  id: string
+  title: string
+  status: 'pass' | 'warning' | 'fail'
+  detail: string
+  remediation?: string
+}
+
+export interface SecurityAuditReport {
+  generatedAt: string
+  score: number
+  summary: {
+    pass: number
+    warning: number
+    fail: number
+  }
+  checks: SecurityAuditCheck[]
+}
+
+export interface RecoveryReport {
+  recoveredAt: string
+  repairedPaths: string[]
+  warnings: string[]
+  actions: string[]
+}
+
+export interface PerformanceSnapshot {
+  capturedAt: string
+  startupAgeMs: number
+  catalogItems: number
+  sources: number
+  platforms: number
+  memory: {
+    rssMb: number
+    heapUsedMb: number
+  }
+  cache: {
+    dataDir: string
+    estimatedMb: number
+    scannedFiles: number
+  }
+}

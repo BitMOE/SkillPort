@@ -68,6 +68,11 @@ const api: SkillPortApi = {
     status: () => invoke('app-updates:status'),
     check: () => invoke('app-updates:check'),
     setEnterpriseDisabled: (disabled) => invoke('app-updates:set-enterprise-disabled', disabled)
+  },
+  hardening: {
+    securityAudit: () => invoke('hardening:security-audit'),
+    recoverRuntime: () => invoke('hardening:recover-runtime'),
+    performanceSnapshot: () => invoke('hardening:performance-snapshot')
   }
 }
 

@@ -56,8 +56,11 @@ import type {
   JobRecord,
   LocalSkillCandidate,
   PlatformConfig,
+  PerformanceSnapshot,
+  RecoveryReport,
   RulePackage,
   RuntimeStatus,
+  SecurityAuditReport,
   SourceConfig
 } from '../../shared/types'
 import { defaultLocale, languageOptions, nextLocale, t, type Locale, type TranslationKey } from './i18n'
@@ -108,6 +111,9 @@ function App(): JSX.Element {
   const [jobs, setJobs] = useState<JobRecord[]>([])
   const [audit, setAudit] = useState<AuditRecord[]>([])
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>()
+  const [securityAudit, setSecurityAudit] = useState<SecurityAuditReport>()
+  const [recoveryReport, setRecoveryReport] = useState<RecoveryReport>()
+  const [performanceSnapshot, setPerformanceSnapshot] = useState<PerformanceSnapshot>()
   const [sourceConnectionMessage, setSourceConnectionMessage] = useState('')
   const [selectedSkillId, setSelectedSkillId] = useState('pr-review')
   const [selectedPlatformKey, setSelectedPlatformKey] = useState('claude-code')
@@ -165,6 +171,35 @@ function App(): JSX.Element {
     setBusy(false)
   }
 
+  async function runSecurityAudit(): Promise<void> {
+    setBusy(true)
+    const [auditResult, performanceResult] = await Promise.all([
+      window.skillport.hardening.securityAudit(),
+      window.skillport.hardening.performanceSnapshot()
+    ])
+    if (auditResult.ok) setSecurityAudit(auditResult.data)
+    if (performanceResult.ok) setPerformanceSnapshot(performanceResult.data)
+    setBusy(false)
+  }
+
+  async function recoverRuntime(): Promise<void> {
+    setBusy(true)
+    const [recoveryResult, runtimeResult] = await Promise.all([
+      window.skillport.hardening.recoverRuntime(),
+      window.skillport.runtime.status()
+    ])
+    if (recoveryResult.ok) setRecoveryReport(recoveryResult.data)
+    if (runtimeResult.ok) setRuntimeStatus(runtimeResult.data)
+    setBusy(false)
+  }
+
+  async function capturePerformance(): Promise<void> {
+    setBusy(true)
+    const result = await window.skillport.hardening.performanceSnapshot()
+    if (result.ok) setPerformanceSnapshot(result.data)
+    setBusy(false)
+  }
+
   const selectedSkill = catalog.find((item) => item.id === selectedSkillId) ?? catalog[0]
   const selectedPlatform = platforms.find((platform) => platform.key === selectedPlatformKey) ?? platforms[0]
   const selectedRule = rules.find((rule) => rule.id === selectedRuleId) ?? rules[0]
@@ -191,9 +226,22 @@ function App(): JSX.Element {
       case 'projects':
         return <Projects locale={locale} platforms={platforms} />
       case 'settings':
-        return <SettingsPage locale={locale} runtimeStatus={runtimeStatus} onLocaleChange={setAndSaveLocale(setLocale)} />
+        return (
+          <SettingsPage
+            locale={locale}
+            runtimeStatus={runtimeStatus}
+            securityAudit={securityAudit}
+            recoveryReport={recoveryReport}
+            performanceSnapshot={performanceSnapshot}
+            busy={busy}
+            onLocaleChange={setAndSaveLocale(setLocale)}
+            onRunSecurityAudit={runSecurityAudit}
+            onRecoverRuntime={recoverRuntime}
+            onCapturePerformance={capturePerformance}
+          />
+        )
     }
-  }, [activeView, audit, busy, catalog, jobs, locale, platforms, rules, runtimeStatus, scanResults, selectedPlatform, selectedRule, selectedSkill, selectedSource, sourceConnectionMessage, summary])
+  }, [activeView, audit, busy, catalog, jobs, locale, performanceSnapshot, platforms, recoveryReport, rules, runtimeStatus, scanResults, securityAudit, selectedPlatform, selectedRule, selectedSkill, selectedSource, sourceConnectionMessage, summary])
 
   return (
     <div className="shell">
@@ -888,11 +936,25 @@ function Projects({ locale, platforms }: { locale: Locale; platforms: PlatformCo
 function SettingsPage({
   locale,
   runtimeStatus,
-  onLocaleChange
+  securityAudit,
+  recoveryReport,
+  performanceSnapshot,
+  busy,
+  onLocaleChange,
+  onRunSecurityAudit,
+  onRecoverRuntime,
+  onCapturePerformance
 }: {
   locale: Locale
   runtimeStatus?: RuntimeStatus
+  securityAudit?: SecurityAuditReport
+  recoveryReport?: RecoveryReport
+  performanceSnapshot?: PerformanceSnapshot
+  busy: boolean
   onLocaleChange: (locale: Locale) => void
+  onRunSecurityAudit: () => void
+  onRecoverRuntime: () => void
+  onCapturePerformance: () => void
 }): JSX.Element {
   return (
     <section>
@@ -908,6 +970,59 @@ function SettingsPage({
           <StatusPill icon={KeyRound} title={t(locale, 'settings.tokenEncryption')} value={runtimeStatus?.tokenEncryption.backend ?? t(locale, 'settings.secureStorage')} tone={runtimeStatus?.tokenEncryption.available ? 'ok' : 'warn'} />
           <StatusPill icon={Database} title={t(locale, 'settings.localDatabase')} value={runtimeStatus?.databasePath ?? 'userData/skillport/catalog.sqlite'} tone="info" />
           <StatusPill icon={HardDrive} title={t(locale, 'settings.cacheDir')} value={runtimeStatus?.dataDir ?? t(locale, 'settings.cacheWritable')} tone="info" />
+        </Panel>
+        <Panel
+          title="Beta Hardening"
+          toolbar={
+            <div className="panel-actions compact">
+              <button className="button" onClick={onRunSecurityAudit} disabled={busy}>
+                {busy ? <Loader2 size={15} className="spin" /> : <ShieldCheck size={15} />}
+                审计
+              </button>
+              <button className="button" onClick={onRecoverRuntime} disabled={busy}>
+                <RotateCcw size={15} />
+                恢复
+              </button>
+              <button className="button" onClick={onCapturePerformance} disabled={busy}>
+                <Gauge size={15} />
+                性能
+              </button>
+            </div>
+          }
+        >
+          <div className="hardening-summary">
+            <StatusPill
+              icon={ShieldCheck}
+              title="安全审计"
+              value={securityAudit ? `${securityAudit.score}/100 · ${securityAudit.summary.warning} warnings` : '未运行'}
+              tone={securityAudit && securityAudit.summary.fail > 0 ? 'danger' : securityAudit && securityAudit.summary.warning > 0 ? 'warn' : 'ok'}
+            />
+            <StatusPill
+              icon={Gauge}
+              title="性能快照"
+              value={performanceSnapshot ? `${performanceSnapshot.memory.rssMb} MB RSS · ${performanceSnapshot.cache.scannedFiles} files` : '未采集'}
+              tone="info"
+            />
+            <StatusPill
+              icon={RotateCcw}
+              title="错误恢复"
+              value={recoveryReport ? `${recoveryReport.repairedPaths.length} repaired · ${recoveryReport.warnings.length} warnings` : '未运行'}
+              tone={recoveryReport && recoveryReport.warnings.length > 0 ? 'warn' : 'ok'}
+            />
+          </div>
+          {securityAudit && (
+            <div className="hardening-checks">
+              {securityAudit.checks.map((check) => (
+                <div key={check.id} className="hardening-check">
+                  <Badge tone={check.status === 'pass' ? 'green' : check.status === 'warning' ? 'orange' : 'red'}>{check.status}</Badge>
+                  <div>
+                    <b>{check.title}</b>
+                    <span>{check.detail}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Panel>
       </div>
     </section>

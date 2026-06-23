@@ -80,6 +80,9 @@ export function registerIpc(runtime: RuntimeServices): void {
   handle('app-updates:status', () => runtime.appUpdates.status())
   handle('app-updates:check', () => runtime.appUpdates.check())
   handle('app-updates:set-enterprise-disabled', (disabled) => runtime.appUpdates.setEnterpriseDisabled(Boolean(disabled)))
+  handle('hardening:security-audit', () => runtime.hardening.securityAudit())
+  handle('hardening:recover-runtime', () => runtime.hardening.recoverRuntime())
+  handle('hardening:performance-snapshot', () => runtime.hardening.performanceSnapshot())
 
   handle('catalog:search', (raw) => {
     const params = searchSchema.parse(raw ?? {})

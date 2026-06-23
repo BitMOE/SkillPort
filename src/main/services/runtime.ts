@@ -3,6 +3,7 @@ import type { RuntimeStatus } from '../../shared/types'
 import { LogService } from './audit/log-service'
 import { CatalogService } from './catalog/catalog-service'
 import { ConfigService } from './config/config-service'
+import { HardeningService } from './hardening/hardening-service'
 import { InstallService } from './install/install-service'
 import { PlatformService } from './platforms/platform-service'
 import { RuleService } from './rules/rule-service'
@@ -27,6 +28,7 @@ export interface RuntimeServices {
   rules: RuleService
   updates: UpdateService
   appUpdates: AppUpdateService
+  hardening: HardeningService
   status: RuntimeStatus
 }
 
@@ -65,6 +67,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
 
   database.setRuntime('runtime.status', status)
   await logs.app('info', 'SkillPort runtime initialized', status)
+  const hardening = new HardeningService(dataDir, database, config, logs, status)
 
   return {
     dataDir,
@@ -80,6 +83,7 @@ export async function initializeRuntime(dataDir: string): Promise<RuntimeService
     rules,
     updates,
     appUpdates,
+    hardening,
     status
   }
 }

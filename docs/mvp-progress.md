@@ -15,6 +15,6 @@ The implementation follows the milestones in `spec/skillport.md`.
 | M9 | Update Manager for Skills and Rules | Complete | `src/main/services/updates/update-service.ts`, content update policy, major-version/risk/trust gates, check/apply update IPC, build passing |
 | M10 | App packaging, signing policy, auto-update | Complete | `electron-builder` targets, GitHub draft publish config, `electron-updater` AppUpdateService, enterprise disable switch, `docs/release-and-signing.md`, build passing |
 | M11 | CLI, doctor, lockfile, import/export | Complete | `bin/skillport.mjs`, package bin, doctor, sources list, config import/export, lockfile write, CLI command catalog, build passing |
-| M12 | Beta hardening, security audit, recovery, docs | Pending | Not implemented yet |
+| M12 | Beta hardening, security audit, recovery, docs | Complete | `src/main/services/hardening/hardening-service.ts`, hardening IPC/preload API, Settings Beta Hardening panel, `docs/beta-hardening.md`, build passing |
 
 Each completed MVP should be committed separately.

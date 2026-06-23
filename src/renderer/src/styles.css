@@ -240,6 +240,15 @@ kbd {
   white-space: nowrap;
 }
 
+.button:disabled,
+.primary:disabled,
+.danger-button:disabled,
+.icon-button:disabled,
+.text-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .primary {
   border-color: var(--blue);
   color: white;
@@ -1311,6 +1320,53 @@ kbd {
 
 .settings-page-grid {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.hardening-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hardening-summary .status-pill {
+  min-width: 0;
+}
+
+.hardening-summary .status-pill span {
+  overflow-wrap: anywhere;
+}
+
+.hardening-checks {
+  display: grid;
+  gap: 8px;
+}
+
+.hardening-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.hardening-check:last-child {
+  border-bottom: 0;
+}
+
+.hardening-check b,
+.hardening-check span {
+  display: block;
+}
+
+.hardening-check span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .project-card-content {
