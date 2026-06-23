@@ -57,6 +57,64 @@ export class SkillPortDatabase {
       .run(provider, label, ciphertextBase64, new Date().toISOString())
   }
 
+  upsertSource(source: {
+    id: string
+    kind: string
+    name: string
+    enabled: boolean
+    url: string
+    config: Record<string, unknown>
+    trustLevel: string
+  }): void {
+    this.db
+      .prepare(
+        `INSERT INTO sources (id, kind, name, enabled, url, config_json, trust_level, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           kind = excluded.kind,
+           name = excluded.name,
+           enabled = excluded.enabled,
+           url = excluded.url,
+           config_json = excluded.config_json,
+           trust_level = excluded.trust_level,
+           updated_at = excluded.updated_at`
+      )
+      .run(source.id, source.kind, source.name, source.enabled ? 1 : 0, source.url, JSON.stringify(source.config), source.trustLevel, new Date().toISOString())
+  }
+
+  listSources(): Array<{
+    id: string
+    kind: string
+    name: string
+    enabled: boolean
+    url: string
+    config: Record<string, unknown>
+    trustLevel: string
+    updatedAt: string
+  }> {
+    return this.db
+      .prepare('SELECT id, kind, name, enabled, url, config_json as configJson, trust_level as trustLevel, updated_at as updatedAt FROM sources ORDER BY name')
+      .all()
+      .map((row) => {
+        const value = row as { id: string; kind: string; name: string; enabled: number; url: string; configJson: string; trustLevel: string; updatedAt: string }
+        return {
+          id: value.id,
+          kind: value.kind,
+          name: value.name,
+          enabled: Boolean(value.enabled),
+          url: value.url,
+          config: JSON.parse(value.configJson) as Record<string, unknown>,
+          trustLevel: value.trustLevel,
+          updatedAt: value.updatedAt
+        }
+      })
+  }
+
+  deleteSource(sourceId: string): boolean {
+    const result = this.db.prepare('DELETE FROM sources WHERE id = ?').run(sourceId)
+    return result.changes > 0
+  }
+
   listTokenStates(): Array<{ provider: string; label: string; configured: boolean; updatedAt: string }> {
     return this.db
       .prepare('SELECT provider, label, updated_at as updatedAt FROM auth_tokens ORDER BY provider, label')

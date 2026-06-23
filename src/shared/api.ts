@@ -20,9 +20,11 @@ export interface SkillPortApi {
   }
   sources: {
     list: () => Promise<ApiResult<SourceConfig[]>>
+    upsert: (source: SourceConfig) => Promise<ApiResult<SourceConfig>>
+    delete: (sourceId: string) => Promise<ApiResult<{ deleted: boolean }>>
     sync: (sourceId: string) => Promise<ApiResult<JobRecord>>
     syncAll: () => Promise<ApiResult<JobRecord>>
-    testConnection: (sourceId: string) => Promise<ApiResult<{ ok: boolean; latencyMs: number }>>
+    testConnection: (sourceId: string) => Promise<ApiResult<{ ok: boolean; latencyMs: number; message: string }>>
   }
   scan: {
     start: (params: { roots: string[]; platformKeys: string[]; ignore?: string[] }) => Promise<ApiResult<LocalSkillCandidate[]>>

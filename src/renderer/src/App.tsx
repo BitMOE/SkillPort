@@ -108,6 +108,7 @@ function App(): JSX.Element {
   const [jobs, setJobs] = useState<JobRecord[]>([])
   const [audit, setAudit] = useState<AuditRecord[]>([])
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>()
+  const [sourceConnectionMessage, setSourceConnectionMessage] = useState('')
   const [selectedSkillId, setSelectedSkillId] = useState('pr-review')
   const [selectedPlatformKey, setSelectedPlatformKey] = useState('claude-code')
   const [selectedRuleId, setSelectedRuleId] = useState('frontend-nextjs')
@@ -157,6 +158,13 @@ function App(): JSX.Element {
     setBusy(false)
   }
 
+  async function testSelectedSource(sourceId: string): Promise<void> {
+    setBusy(true)
+    const result = await window.skillport.sources.testConnection(sourceId)
+    setSourceConnectionMessage(result.ok ? `${result.data.message} · ${result.data.latencyMs}ms` : result.error.message)
+    setBusy(false)
+  }
+
   const selectedSkill = catalog.find((item) => item.id === selectedSkillId) ?? catalog[0]
   const selectedPlatform = platforms.find((platform) => platform.key === selectedPlatformKey) ?? platforms[0]
   const selectedRule = rules.find((rule) => rule.id === selectedRuleId) ?? rules[0]
@@ -175,7 +183,7 @@ function App(): JSX.Element {
       case 'rules':
         return <RuleCenter locale={locale} rules={rules} selectedRule={selectedRule} onSelectRule={setSelectedRuleId} />
       case 'sources':
-        return <SourcesPage locale={locale} sources={sources} selectedSource={selectedSource} onSelectSource={setSelectedSourceId} />
+        return <SourcesPage locale={locale} sources={sources} selectedSource={selectedSource} connectionMessage={sourceConnectionMessage} onSelectSource={setSelectedSourceId} onTestConnection={testSelectedSource} />
       case 'platforms':
         return <PlatformSettings locale={locale} platforms={platforms} selectedPlatform={selectedPlatform} onSelectPlatform={setSelectedPlatformKey} />
       case 'jobs':
@@ -185,7 +193,7 @@ function App(): JSX.Element {
       case 'settings':
         return <SettingsPage locale={locale} runtimeStatus={runtimeStatus} onLocaleChange={setAndSaveLocale(setLocale)} />
     }
-  }, [activeView, audit, busy, catalog, jobs, locale, platforms, rules, runtimeStatus, scanResults, selectedPlatform, selectedRule, selectedSkill, selectedSource, summary])
+  }, [activeView, audit, busy, catalog, jobs, locale, platforms, rules, runtimeStatus, scanResults, selectedPlatform, selectedRule, selectedSkill, selectedSource, sourceConnectionMessage, summary])
 
   return (
     <div className="shell">
@@ -651,12 +659,16 @@ function SourcesPage({
   locale,
   sources,
   selectedSource,
-  onSelectSource
+  connectionMessage,
+  onSelectSource,
+  onTestConnection
 }: {
   locale: Locale
   sources: SourceConfig[]
   selectedSource?: SourceConfig
+  connectionMessage: string
   onSelectSource: (id: string) => void
+  onTestConnection: (id: string) => void
 }): JSX.Element {
   return (
     <section>
@@ -678,6 +690,10 @@ function SourcesPage({
           <button className="button">
             <ExternalLink size={16} />
             导出配置
+          </button>
+          <button className="button" onClick={() => selectedSource && onTestConnection(selectedSource.id)}>
+            <Globe2 size={16} />
+            测试连接
           </button>
         </div>
       </div>
@@ -711,6 +727,7 @@ function SourcesPage({
             <div>
               <CredentialBox title="GitHub Token" state="正常" text="已配置，剩余 4,632 / 5,000 (92.6%)" />
               <CredentialBox title="GitLab Token（可选）" state="警告" text="未配置 Token，将受限于未登录访问。" />
+              <Notice tone="info" title="连接测试" text={connectionMessage || '点击顶部测试连接，验证当前源是否可访问。'} />
               <Notice tone="info" title="自托管 GitLab 提示" text="若使用自托管 GitLab，请在 API Base 中填写正确地址，并确保迁移受信任。" />
               <Panel title="同步日志（最近 10 条）" compact>
                 <DataTable>

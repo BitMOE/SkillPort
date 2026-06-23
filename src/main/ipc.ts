@@ -11,7 +11,6 @@ import {
   platforms,
   rulePackages,
   scanLocalSkills,
-  sources,
   timestampedJob
 } from './services/demo-data'
 import type { RuntimeServices } from './services/runtime'
@@ -27,6 +26,23 @@ const scanSchema = z.object({
   roots: z.array(z.string()).min(1),
   platformKeys: z.array(z.string()),
   ignore: z.array(z.string()).optional()
+})
+
+const sourceSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(['github', 'gitlab', 'self-hosted-gitlab', 'skills-sh', 'local-dir', 'archive']),
+  name: z.string().min(1),
+  enabled: z.boolean(),
+  url: z.string().min(1),
+  apiBase: z.string().optional(),
+  branch: z.string().optional(),
+  paths: z.array(z.string()).optional(),
+  authRef: z.string().optional(),
+  refreshIntervalMinutes: z.number().optional(),
+  trustLevel: z.enum(['official', 'team', 'community', 'unknown']),
+  lastSync: z.string().optional().default('从未同步'),
+  status: z.enum(['success', 'warning', 'failed']).optional().default('success'),
+  tokenState: z.enum(['healthy', 'warning', 'invalid', 'missing']).optional()
 })
 
 const planSchema = z.object({
@@ -88,10 +104,12 @@ export function registerIpc(runtime: RuntimeServices): void {
     }
   })
 
-  handle('sources:list', () => sources)
-  handle('sources:sync', (sourceId) => timestampedJob('同步源', String(sourceId), '同步完成，已刷新本地 catalog'))
-  handle('sources:sync-all', () => timestampedJob('同步全部源', 'all sources', '完成 5 个源同步，1 个源需要关注', 'partial_success'))
-  handle('sources:test-connection', (sourceId) => ({ ok: !String(sourceId).includes('self-hosted'), latencyMs: 82 }))
+  handle('sources:list', () => runtime.sources.list())
+  handle('sources:upsert', (raw) => runtime.sources.upsert(sourceSchema.parse(raw)))
+  handle('sources:delete', (sourceId) => ({ deleted: runtime.sources.delete(String(sourceId)) }))
+  handle('sources:sync', (sourceId) => runtime.sources.sync(String(sourceId)))
+  handle('sources:sync-all', () => runtime.sources.syncAll())
+  handle('sources:test-connection', (sourceId) => runtime.sources.testConnection(String(sourceId)))
 
   handle('scan:start', async (raw) => {
     const params = scanSchema.parse(raw)

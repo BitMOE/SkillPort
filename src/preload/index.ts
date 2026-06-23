@@ -11,6 +11,8 @@ const api: SkillPortApi = {
   },
   sources: {
     list: () => invoke('sources:list'),
+    upsert: (source) => invoke('sources:upsert', source),
+    delete: (sourceId) => invoke('sources:delete', sourceId),
     sync: (sourceId) => invoke('sources:sync', sourceId),
     syncAll: () => invoke('sources:sync-all'),
     testConnection: (sourceId) => invoke('sources:test-connection', sourceId)
