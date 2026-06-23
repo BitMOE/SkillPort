@@ -57,6 +57,14 @@ const ruleApplySchema = rulePreviewSchema.extend({
   selectedRuleIds: z.array(z.string())
 })
 
+const updatePolicySchema = z.object({
+  autoCheck: z.boolean().optional(),
+  autoApplyTrustedSources: z.boolean().optional(),
+  allowMajorVersion: z.boolean().optional(),
+  blockScriptSkills: z.boolean().optional(),
+  schedule: z.enum(['manual', 'startup', 'daily', 'weekly']).optional()
+})
+
 export function registerIpc(runtime: RuntimeServices): void {
   handle('dashboard:summary', () => dashboardSummary())
   handle('runtime:status', () => runtime.status)
@@ -65,6 +73,10 @@ export function registerIpc(runtime: RuntimeServices): void {
     ...runtime.tokens.status(),
     configuredTokens: runtime.tokens.listStates()
   }))
+  handle('updates:policy', () => runtime.updates.policy())
+  handle('updates:update-policy', (raw) => runtime.updates.updatePolicy(updatePolicySchema.parse(raw ?? {})))
+  handle('updates:check-content', () => runtime.updates.checkContent())
+  handle('updates:apply-content', (itemIds) => runtime.updates.applyContent(z.array(z.string()).parse(itemIds)))
 
   handle('catalog:search', (raw) => {
     const params = searchSchema.parse(raw ?? {})

@@ -147,3 +147,22 @@ export interface RuntimeStatus {
   }
   initializedAt: string
 }
+
+export interface ContentUpdatePolicy {
+  autoCheck: boolean
+  autoApplyTrustedSources: boolean
+  allowMajorVersion: boolean
+  blockScriptSkills: boolean
+  schedule: 'manual' | 'startup' | 'daily' | 'weekly'
+}
+
+export interface ContentUpdateCandidate {
+  itemId: string
+  name: string
+  currentVersion?: string
+  nextVersion: string
+  type: 'skill' | 'rule_package'
+  trustLevel: TrustLevel
+  autoApplicable: boolean
+  blockedReasons: string[]
+}

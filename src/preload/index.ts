@@ -57,6 +57,12 @@ const api: SkillPortApi = {
   },
   security: {
     tokenStatus: () => invoke('security:token-status')
+  },
+  updates: {
+    policy: () => invoke('updates:policy'),
+    updatePolicy: (policy) => invoke('updates:update-policy', policy),
+    checkContent: () => invoke('updates:check-content'),
+    applyContent: (itemIds) => invoke('updates:apply-content', itemIds)
   }
 }
 

@@ -11,6 +11,7 @@ import type {
   RuntimeStatus,
   SourceConfig
 } from './types'
+import type { ContentUpdateCandidate, ContentUpdatePolicy } from './types'
 
 export interface SkillPortApi {
   catalog: {
@@ -72,5 +73,11 @@ export interface SkillPortApi {
   }
   security: {
     tokenStatus: () => Promise<ApiResult<RuntimeStatus['tokenEncryption'] & { configuredTokens: Array<{ provider: string; label: string; configured: boolean; updatedAt: string }> }>>
+  }
+  updates: {
+    policy: () => Promise<ApiResult<ContentUpdatePolicy>>
+    updatePolicy: (policy: Partial<ContentUpdatePolicy>) => Promise<ApiResult<ContentUpdatePolicy>>
+    checkContent: () => Promise<ApiResult<ContentUpdateCandidate[]>>
+    applyContent: (itemIds: string[]) => Promise<ApiResult<JobRecord>>
   }
 }
