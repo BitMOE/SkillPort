@@ -1,0 +1,223 @@
+platforms:
+  - key: claude-code
+    displayName: Claude Code
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: "~/.claude/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.claude/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/CLAUDE.md"
+        type: file
+        mergeStrategies: [section_merge, append_block]
+      - scope: project
+        path: "<project>/.claude/CLAUDE.md"
+        type: file
+        mergeStrategies: [section_merge]
+    install:
+      defaultMode: symlink
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+  - key: cursor
+    displayName: Cursor
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: ".cursor/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.cursor/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/.cursor/rules"
+        type: directory
+        mergeStrategies: [replace, section_merge]
+      - scope: project
+        path: "<project>/.cursorrules"
+        type: file
+        mergeStrategies: [section_merge]
+    install:
+      defaultMode: copy
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+  - key: windsurf
+    displayName: Windsurf
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: "~/.codeium/windsurf/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.windsurf/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/.windsurfrules"
+        type: file
+        mergeStrategies: [section_merge]
+    install:
+      defaultMode: copy
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+  - key: codex
+    displayName: Codex
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: "~/.codex/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.codex/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/AGENTS.md"
+        type: file
+        mergeStrategies: [section_merge, append_block]
+    install:
+      defaultMode: copy
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+  - key: gemini-cli
+    displayName: Gemini CLI
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: "~/.gemini/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.gemini/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/GEMINI.md"
+        type: file
+        mergeStrategies: [section_merge]
+    install:
+      defaultMode: copy
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+  - key: cline
+    displayName: Cline
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: "~/.cline/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.cline/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/.clinerules"
+        type: file
+        mergeStrategies: [section_merge]
+    install:
+      defaultMode: copy
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+  - key: qoder
+    displayName: Qoder
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: "~/.qoder/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.qoder/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/QODER.md"
+        type: file
+        mergeStrategies: [section_merge]
+    install:
+      defaultMode: copy
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+  - key: opencode
+    displayName: OpenCode
+    enabled: true
+    supportedOS: [macos, windows, linux]
+    skills:
+      user:
+        defaultPath: "~/.opencode/skills"
+        canOverride: true
+      project:
+        defaultPath: "<project>/.opencode/skills"
+        canOverride: true
+    rules:
+      - scope: project
+        path: "<project>/opencode.md"
+        type: file
+        mergeStrategies: [section_merge]
+    install:
+      defaultMode: symlink
+      allowSymlink: true
+      fallbackMode: copy
+    scan:
+      enabled: true
+      patterns: ["**/SKILL.md"]
+
+aliases:
+  kiro:
+    displayName: Kiro
+    ruleTargets: [".kiro/steering"]
+  kilo-code:
+    displayName: Kilo Code
+    ruleTargets: [".kilocode/rules"]
+  qoderwork:
+    displayName: QoderWork
+    ruleTargets: ["QODERWORK.md"]
+  codebuddy:
+    displayName: CodeBuddy
+    ruleTargets: ["CODEBUDDY.md"]
+  trae:
+    displayName: Trae
+    ruleTargets: [".traerules"]
+  trae-cn:
+    displayName: Trae CN
+    ruleTargets: [".trae-cn/rules"]
+  generic:
+    displayName: Generic
+    ruleTargets: ["RULES.md"]

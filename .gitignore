@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+release/
+.vite/
+*.log
+*.local
+.env
+.env.*
+!.env.example

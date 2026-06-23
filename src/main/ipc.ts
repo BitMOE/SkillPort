@@ -1,0 +1,209 @@
+import { ipcMain } from 'electron'
+import { z } from 'zod'
+import type { ApiResult } from '../shared/types'
+import {
+  audit,
+  catalogItems,
+  createInstallPlan,
+  dashboardSummary,
+  installPlans,
+  jobs,
+  platforms,
+  rulePackages,
+  scanLocalSkills,
+  sources,
+  timestampedJob
+} from './services/demo-data'
+
+const searchSchema = z.object({
+  query: z.string().optional(),
+  platform: z.string().optional(),
+  status: z.string().optional(),
+  trustLevel: z.string().optional()
+})
+
+const scanSchema = z.object({
+  roots: z.array(z.string()).min(1),
+  platformKeys: z.array(z.string()),
+  ignore: z.array(z.string()).optional()
+})
+
+const planSchema = z.object({
+  itemId: z.string(),
+  platformKeys: z.array(z.string()).min(1),
+  scope: z.enum(['user', 'project', 'system']),
+  projectRoot: z.string().optional(),
+  mode: z.enum(['copy', 'symlink'])
+})
+
+const rulePreviewSchema = z.object({
+  packageId: z.string(),
+  projectRoot: z.string(),
+  platformKeys: z.array(z.string())
+})
+
+const ruleApplySchema = rulePreviewSchema.extend({
+  selectedRuleIds: z.array(z.string())
+})
+
+export function registerIpc(dataDir: string): void {
+  handle('dashboard:summary', () => dashboardSummary())
+
+  handle('catalog:search', (raw) => {
+    const params = searchSchema.parse(raw ?? {})
+    const query = params.query?.toLowerCase().trim()
+    return catalogItems.filter((item) => {
+      const matchesQuery = !query || [item.name, item.description, item.tags.join(' ')].join(' ').toLowerCase().includes(query)
+      const matchesPlatform = !params.platform || params.platform === 'all' || item.platforms.includes(params.platform)
+      const matchesStatus =
+        !params.status ||
+        params.status === 'all' ||
+        (params.status === 'installed' && item.installed) ||
+        (params.status === 'updateable' && Boolean(item.updateVersion)) ||
+        (params.status === 'uninstalled' && !item.installed)
+      const matchesTrust = !params.trustLevel || params.trustLevel === 'all' || item.trustLevel === params.trustLevel
+      return matchesQuery && matchesPlatform && matchesStatus && matchesTrust
+    })
+  })
+
+  handle('catalog:get-detail', (id) => {
+    const item = catalogItems.find((entry) => entry.id === String(id))
+    if (!item) throw new Error('Skill 不存在')
+    return item
+  })
+
+  handle('catalog:validate', (id) => {
+    const item = catalogItems.find((entry) => entry.id === String(id))
+    if (!item) throw new Error('Skill 不存在')
+    return {
+      valid: item.riskCount === 0,
+      risks: item.riskCount > 0 ? ['包含 scripts/ 目录', '缺少 version 字段或版本不可验证'] : []
+    }
+  })
+
+  handle('sources:list', () => sources)
+  handle('sources:sync', (sourceId) => timestampedJob('同步源', String(sourceId), '同步完成，已刷新本地 catalog'))
+  handle('sources:sync-all', () => timestampedJob('同步全部源', 'all sources', '完成 5 个源同步，1 个源需要关注', 'partial_success'))
+  handle('sources:test-connection', (sourceId) => ({ ok: !String(sourceId).includes('self-hosted'), latencyMs: 82 }))
+
+  handle('scan:start', async (raw) => {
+    const params = scanSchema.parse(raw)
+    const results = await scanLocalSkills(params.roots, params.ignore)
+    return results.length > 0 ? results : demoScanResults()
+  })
+  handle('scan:import-candidate', (raw) => {
+    const params = z.object({ candidateId: z.string(), mode: z.enum(['copy', 'symlink']) }).parse(raw)
+    return timestampedJob('导入 Skill', params.candidateId, `以 ${params.mode} 模式导入并分发`)
+  })
+
+  handle('install:create-plan', (raw) => {
+    const params = planSchema.parse(raw)
+    return createInstallPlan(dataDir, params.itemId, params.platformKeys, params.scope, params.mode)
+  })
+  handle('install:execute', (planId) => {
+    const plan = installPlans.get(String(planId))
+    if (!plan) throw new Error('安装计划不存在或已过期')
+    return timestampedJob('安装 Skill', plan.itemId, `已写入 ${plan.targets.length} 个平台目标`)
+  })
+
+  handle('rules:list', () => rulePackages)
+  handle('rules:preview-apply', (raw) => {
+    const params = rulePreviewSchema.parse(raw)
+    return {
+      diff: [
+        `@@ -12,7 +12,16 @@ ${params.projectRoot}`,
+        '- 使用 CSS Modules 管理组件样式',
+        '- 避免内联样式',
+        '+ 使用 Tailwind CSS 进行样式开发',
+        '+ 遵循 Atomic Design 组件设计原则',
+        '+ 组件 props 使用 TypeScript 严格类型',
+        '+ 优先使用 Server Components'
+      ].join('\n')
+    }
+  })
+  handle('rules:apply-package', (raw) => {
+    const params = ruleApplySchema.parse(raw)
+    return timestampedJob('应用 Rule 包', params.packageId, `应用 ${params.selectedRuleIds.length} 条规则到 ${params.platformKeys.length} 个平台`)
+  })
+
+  handle('platforms:list', () => platforms)
+  handle('platforms:update', (platformKey, config) => {
+    const platform = platforms.find((entry) => entry.key === String(platformKey))
+    if (!platform) throw new Error('平台不存在')
+    Object.assign(platform, config)
+    return platform
+  })
+  handle('platforms:reset', (platformKey) => {
+    const platform = platforms.find((entry) => entry.key === String(platformKey))
+    if (!platform) throw new Error('平台不存在')
+    platform.enabled = true
+    platform.installMode = 'copy'
+    platform.scanEnabled = true
+    return platform
+  })
+
+  handle('jobs:list', () => jobs)
+  handle('jobs:retry', (jobId) => timestampedJob('重试任务', String(jobId), '任务已重新排队'))
+  handle('audit:list', () => audit)
+}
+
+function handle<TArgs extends unknown[], TResult>(channel: string, listener: (...args: TArgs) => TResult | Promise<TResult>): void {
+  ipcMain.handle(channel, async (_event, ...args: TArgs): Promise<ApiResult<TResult>> => {
+    try {
+      return { ok: true, data: await listener(...args) }
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          code: 'SKILLPORT_IPC_ERROR',
+          message: error instanceof Error ? error.message : '未知错误',
+          detail: error
+        }
+      }
+    }
+  })
+}
+
+function demoScanResults() {
+  return [
+    {
+      id: 'local-terminal-master',
+      name: 'terminal-master',
+      version: '1.2.0',
+      description: '提供安全、智能的终端命令执行与输出解析能力。',
+      tags: ['Shell', 'CLI', 'Terminal'],
+      path: '~/.claude/skills/terminal-master',
+      detectedPlatform: 'Claude Code',
+      fileCount: 8,
+      checksum: 'sha256:local-a81c2d',
+      risks: [{ level: 'medium' as const, message: '检测到可执行脚本文件 scripts/run.sh。' }],
+      importable: true
+    },
+    {
+      id: 'local-incident-responder',
+      name: 'incident-responder',
+      version: '1.0.0',
+      description: '面向运维事故的排查、记录与响应建议。',
+      tags: ['Ops', 'Incident'],
+      path: '~/.agents/skills/incident-responder',
+      detectedPlatform: 'Codex',
+      fileCount: 7,
+      checksum: 'sha256:local-b74e9f',
+      risks: [],
+      importable: true
+    },
+    {
+      id: 'local-data-analyzer',
+      name: 'data-analyzer',
+      version: '1.1.0',
+      description: '分析 CSV、日志和业务指标，输出可执行洞察。',
+      tags: ['Data', 'Analysis'],
+      path: '~/.gemini/skills/data-analyzer',
+      detectedPlatform: 'Gemini CLI',
+      fileCount: 7,
+      checksum: 'sha256:local-77c10a',
+      risks: [],
+      importable: true
+    }
+  ]
+}
